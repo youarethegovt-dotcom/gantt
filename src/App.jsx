@@ -905,17 +905,23 @@ export default function App() {
 
     async function loadSchedule() {
       const [phaseRes, msRes] = await Promise.all([
-        supabase.from('schedule_phases')
+        supabase.from('schedule')
           .select('*')
-          .eq('project_number', selectedProject)
-          .order('sort_order'),
+          .eq('project_number', selectedProject),
         supabase.from('schedule_milestones')
           .select('*')
           .eq('project_number', selectedProject)
           .order('milestone_date'),
       ]);
 
-      let loadedPhases = phaseRes.data || [];
+      // Normalize schedule table columns to expected field names
+      let loadedPhases = (phaseRes.data || []).map(p => ({
+        ...p,
+        phase_code: p.phase,
+        start_date: p.phase_start,
+        end_date: p.phase_end,
+        sort_order: PHASES.findIndex(ph => ph.code === p.phase) + 1,
+      }));
 
       // Ensure all 6 phases exist for this project
       const existingCodes = new Set(loadedPhases.map(p => p.phase_code));
@@ -924,16 +930,26 @@ export default function App() {
       if (missingPhases.length > 0) {
         const toInsert = missingPhases.map(p => ({
           project_number: selectedProject,
-          phase_code: p.code,
-          phase_name: p.name,
-          sort_order: p.sort,
+          phase: p.code,
+          phase_start: null,
+          phase_end: null,
           percent_complete: 0,
+          active: true,
         }));
         const { data: inserted } = await supabase
-          .from('schedule_phases')
+          .from('schedule')
           .insert(toInsert)
           .select();
-        if (inserted) loadedPhases = [...loadedPhases, ...inserted];
+        if (inserted) {
+          const normalized = inserted.map(p => ({
+            ...p,
+            phase_code: p.phase,
+            start_date: p.phase_start,
+            end_date: p.phase_end,
+            sort_order: PHASES.findIndex(ph => ph.code === p.phase) + 1,
+          }));
+          loadedPhases = [...loadedPhases, ...normalized];
+        }
       }
 
       loadedPhases.sort((a, b) => a.sort_order - b.sort_order);
@@ -964,7 +980,11 @@ export default function App() {
         p.phase_code === phaseCode ? { ...p, [field]: value } : p
       );
       const phase = updated.find(p => p.phase_code === phaseCode);
-      if (phase) debouncedSave('schedule_phases', phase.id, { [field]: value });
+      if (phase) {
+        // Map display field names back to actual DB column names
+        const dbField = field === 'start_date' ? 'phase_start' : field === 'end_date' ? 'phase_end' : field;
+        debouncedSave('schedule', phase.id, { [dbField]: value });
+      }
       return updated;
     });
   }, [debouncedSave]);
