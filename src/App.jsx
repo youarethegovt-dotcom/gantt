@@ -122,6 +122,9 @@ const CSS = `
   .user-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border); padding: 5px 12px; border-radius: 16px; font-size: 13px; color: var(--text-dim); }
   .role-tag { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 6px; border-radius: 4px; font-weight: 700; background: var(--accent-light); color: var(--accent); }
 
+  /* Sticky top section */
+  .sticky-top { position: sticky; top: 0; z-index: 25; background: var(--bg); padding-bottom: 4px; }
+
   /* Cards */
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
   .card h2 { font-size: 14px; font-weight: 600; margin-bottom: 14px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
@@ -140,8 +143,8 @@ const CSS = `
   .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
   /* Gantt wrapper + toolbar */
-  .gantt-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 16px; box-shadow: var(--shadow-sm); overflow: hidden; }
-  .gantt-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 20; background: var(--surface); }
+  .gantt-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 16px; box-shadow: var(--shadow-sm); overflow: visible; }
+  .gantt-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 20; background: var(--surface); border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
   .gantt-toolbar-left { display: flex; align-items: center; gap: 8px; }
   .gantt-toolbar-right { display: flex; align-items: center; gap: 8px; }
   .gantt-toggle { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-dim); cursor: pointer; user-select: none; }
@@ -1307,36 +1310,40 @@ export default function App() {
     <div className="app">
       <style>{CSS}</style>
 
-      {/* Header */}
-      <div className="header">
-        <h1><span className="logo">ESa</span> Schedule</h1>
-        <div className="header-right">
-          {saveStatus!=='idle' && <div className={`save-indicator ${saveStatus}`}>{saveStatus==='saving'&&'● Saving...'}{saveStatus==='saved'&&'✓ Saved'}{saveStatus==='error'&&'✕ Save failed'}</div>}
-          {currentUser && selectedProject && <div className="user-badge">{currentUser}{userRole ? <span className="role-tag">{userRole}</span> : <span className="role-tag" style={{background:'var(--danger-light)',color:'var(--danger)'}}>View Only</span>}</div>}
-        </div>
-      </div>
-
-      {/* Project selector */}
-      <div className="card">
-        <div className="selector-row">
-          <div className="user-select-wrap">
-            <select value={currentUser} onChange={e=>{setCurrentUser(e.target.value);setSelectedProject(null);}}><option value="">Select your name...</option>{employees.map(n=><option key={n} value={n}>{n}</option>)}</select>
+      {/* Sticky top section */}
+      <div className="sticky-top">
+        {/* Header */}
+        <div className="header">
+          <h1><span className="logo">ESa</span> Schedule</h1>
+          <div className="header-right">
+            {saveStatus!=='idle' && <div className={`save-indicator ${saveStatus}`}>{saveStatus==='saving'&&'● Saving...'}{saveStatus==='saved'&&'✓ Saved'}{saveStatus==='error'&&'✕ Save failed'}</div>}
+            {currentUser && selectedProject && <div className="user-badge">{currentUser}{userRole ? <span className="role-tag">{userRole}</span> : <span className="role-tag" style={{background:'var(--danger-light)',color:'var(--danger)'}}>View Only</span>}</div>}
           </div>
-          <ProjectSearchSelect projects={projects} currentUser={currentUser} selectedProject={selectedProject} onSelect={setSelectedProject} />
         </div>
+
+        {/* Project selector */}
+        <div className="card" style={{marginBottom:8}}>
+          <div className="selector-row">
+            <div className="user-select-wrap">
+              <select value={currentUser} onChange={e=>{setCurrentUser(e.target.value);setSelectedProject(null);}}><option value="">Select your name...</option>{employees.map(n=><option key={n} value={n}>{n}</option>)}</select>
+            </div>
+            <ProjectSearchSelect projects={projects} currentUser={currentUser} selectedProject={selectedProject} onSelect={setSelectedProject} />
+          </div>
+        </div>
+
+        {selectedProject && (
+          <div className="status-bar" style={{marginBottom:8}}>
+            <span style={{fontWeight:600,color:'var(--text)'}}>{selectedProjectData?.project_name}</span>
+            <span>|</span><span>PM: {selectedProjectData?.pm||'—'}</span><span>DM: {selectedProjectData?.dm||'—'}</span><span>Principal: {selectedProjectData?.principal||'—'}</span>
+            {currentPhase && <><span>|</span><span className="status-dot" style={{background:currentPhase.color}} /><span style={{color:currentPhase.color,fontWeight:500}}>Currently in {currentPhase.name}</span></>}
+          </div>
+        )}
       </div>
 
       {!selectedProject ? (
         <div className="empty-state"><p>Select a project to view or edit its schedule</p></div>
       ) : (
         <>
-          {/* Status bar */}
-          <div className="status-bar">
-            <span style={{fontWeight:600,color:'var(--text)'}}>{selectedProjectData?.project_name}</span>
-            <span>|</span><span>PM: {selectedProjectData?.pm||'—'}</span><span>DM: {selectedProjectData?.dm||'—'}</span><span>Principal: {selectedProjectData?.principal||'—'}</span>
-            {currentPhase && <><span>|</span><span className="status-dot" style={{background:currentPhase.color}} /><span style={{color:currentPhase.color,fontWeight:500}}>Currently in {currentPhase.name}</span></>}
-          </div>
-
           {/* Gantt Chart with sticky toolbar */}
           <div className="gantt-wrap">
             <div className="gantt-toolbar">
