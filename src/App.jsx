@@ -20,23 +20,23 @@ function LoginScreen({ onLogin }) {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f1117', fontFamily: "'DM Sans', -apple-system, sans-serif" }}>
-      <div style={{ background: '#1a1d27', border: '1px solid #2e3340', borderRadius: 12, padding: '40px 36px', width: 360 }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f4f5f7', fontFamily: "'DM Sans', -apple-system, sans-serif" }}>
+      <div style={{ background: '#fff', border: '1px solid #e0e2e7', borderRadius: 10, padding: '40px 36px', width: 360, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
         <div style={{ marginBottom: 28, textAlign: 'center' }}>
-          <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.3px', background: 'linear-gradient(135deg, #8b5cf6, #d946ef)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: 4 }}>ESa Schedule</div>
+          <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.3px', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: 4 }}>ESa Schedule</div>
           <div style={{ color: '#8b8fa3', fontSize: 13 }}>Sign in to continue</div>
         </div>
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: 14 }}>
-            <label style={{ display: 'block', color: '#8b8fa3', fontSize: 12, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Email</label>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required autoFocus style={{ width: '100%', padding: '10px 12px', background: '#232733', border: '1px solid #2e3340', borderRadius: 8, color: '#e8eaed', fontSize: 14, outline: 'none' }} />
+            <label style={{ display: 'block', color: '#5a5e72', fontSize: 12, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Email</label>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required autoFocus style={{ width: '100%', padding: '10px 12px', background: '#f0f1f3', border: '1px solid #e0e2e7', borderRadius: 6, color: '#1a1d27', fontSize: 14, outline: 'none', fontFamily: 'inherit' }} />
           </div>
           <div style={{ marginBottom: 20 }}>
-            <label style={{ display: 'block', color: '#8b8fa3', fontSize: 12, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Password</label>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required style={{ width: '100%', padding: '10px 12px', background: '#232733', border: '1px solid #2e3340', borderRadius: 8, color: '#e8eaed', fontSize: 14, outline: 'none' }} />
+            <label style={{ display: 'block', color: '#5a5e72', fontSize: 12, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Password</label>
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required style={{ width: '100%', padding: '10px 12px', background: '#f0f1f3', border: '1px solid #e0e2e7', borderRadius: 6, color: '#1a1d27', fontSize: 14, outline: 'none', fontFamily: 'inherit' }} />
           </div>
           {error && <div style={{ color: '#ef4444', fontSize: 13, marginBottom: 14, textAlign: 'center' }}>{error}</div>}
-          <button type="submit" disabled={loading} style={{ width: '100%', padding: '11px', background: 'linear-gradient(135deg, #8b5cf6, #d946ef)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 14, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}>{loading ? 'Signing in…' : 'Sign In'}</button>
+          <button type="submit" disabled={loading} style={{ width: '100%', padding: '11px', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', border: 'none', borderRadius: 6, color: '#fff', fontSize: 14, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, fontFamily: 'inherit' }}>{loading ? 'Signing in…' : 'Sign In'}</button>
         </form>
       </div>
     </div>
@@ -72,7 +72,6 @@ const BUILTIN_PHASES = [
 const BUILTIN_PREFIX = { PRE: 'PD', SD: 'SD', DD: 'DD', CD: 'CD', BID: 'BD', CA: 'CA' };
 const DEP_TYPES = ['FS', 'SS', 'FF', 'SF'];
 
-/** Merge built-in + custom phases into a single ordered list */
 function mergePhases(customPhases) {
   const all = [...BUILTIN_PHASES];
   (customPhases || []).forEach(cp => {
@@ -86,54 +85,108 @@ function makePhaseSortMap(allPhases) { return Object.fromEntries(allPhases.map(p
 
 function getPhasePrefix(code, allPhases) {
   if (BUILTIN_PREFIX[code]) return BUILTIN_PREFIX[code];
-  // Custom phase: use first 2 chars uppercase
   return code.substring(0, 2).toUpperCase();
 }
 
 
 /* ═══════════════════════════════════════════════════════════
-   STYLES
+   STYLES — Light theme matching deployed bundle
    ═══════════════════════════════════════════════════════════ */
 
 const CSS = `
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --bg: #0f1117; --surface: #1a1d27; --surface2: #232733;
-    --border: #2e3340; --border-hover: #3d4255;
-    --text: #e8eaed; --text-dim: #8b8fa3; --text-muted: #5a5e72;
-    --accent: #8b5cf6; --accent-dim: rgba(139, 92, 246, 0.15);
-    --success: #22c55e; --warning: #f59e0b; --danger: #ef4444; --critical: #ef4444;
-    --today: #22c55e; --radius: 8px; --radius-lg: 12px;
-    --font: 'DM Sans', -apple-system, sans-serif; --mono: 'JetBrains Mono', monospace;
+    --bg: #f4f5f7; --surface: #fff; --surface2: #f0f1f3;
+    --border: #e0e2e7; --border-hover: #c8cad1;
+    --text: #1a1d27; --text-dim: #5a5e72; --text-muted: #8b8fa3;
+    --accent: #3b82f6; --accent-light: rgba(59, 130, 246, 0.1);
+    --accent-hover: #2563eb;
+    --success: #22c55e; --warning: #f59e0b; --danger: #ef4444;
+    --danger-light: rgba(239, 68, 68, 0.08);
+    --critical: #ef4444;
+    --today: #22c55e; --radius: 6px; --radius-lg: 10px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+    --shadow: 0 2px 8px rgba(0,0,0,0.08);
+    --font: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --mono: 'JetBrains Mono', 'SF Mono', monospace;
   }
   body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.5; -webkit-font-smoothing: antialiased; }
   .app { max-width: 1500px; margin: 0 auto; padding: 24px; }
 
   /* Header */
-  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
   .header h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.3px; display: flex; align-items: center; gap: 10px; }
-  .header h1 .logo { background: linear-gradient(135deg, var(--accent), #d946ef); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; }
+  .header h1 .logo { background: linear-gradient(135deg, var(--accent), #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; }
   .header-right { display: flex; align-items: center; gap: 16px; }
-  .user-badge { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border); padding: 6px 14px; border-radius: 20px; font-size: 13px; }
-  .role-tag { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 6px; border-radius: 4px; font-weight: 600; background: var(--accent-dim); color: var(--accent); }
+  .user-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border); padding: 5px 12px; border-radius: 16px; font-size: 13px; color: var(--text-dim); }
+  .role-tag { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 6px; border-radius: 4px; font-weight: 700; background: var(--accent-light); color: var(--accent); }
 
   /* Cards */
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 20px; }
-  .card h2 { font-size: 15px; font-weight: 600; margin-bottom: 16px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
+  .card h2 { font-size: 14px; font-weight: 600; margin-bottom: 14px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
 
   /* Selectors */
   .project-selector { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-  .project-selector select, .project-selector .user-select { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 10px 14px; border-radius: var(--radius); font-family: var(--font); font-size: 14px; min-width: 280px; cursor: pointer; outline: none; }
+  .project-selector select, .project-selector .user-select {
+    background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+    padding: 10px 14px; border-radius: var(--radius); font-family: var(--font); font-size: 14px;
+    min-width: 280px; cursor: pointer; outline: none;
+  }
   .project-selector select:focus { border-color: var(--accent); }
 
   /* Status bar */
-  .status-bar { display: flex; align-items: center; gap: 16px; padding: 10px 16px; background: var(--surface2); border-radius: var(--radius); font-size: 12px; color: var(--text-dim); margin-bottom: 20px; flex-wrap: wrap; }
+  .status-bar { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--surface2); border-radius: var(--radius); font-size: 12px; color: var(--text-dim); margin-bottom: 16px; flex-wrap: wrap; }
   .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
-  /* Sticky toolbar */
-  .sticky-toolbar { position: sticky; top: 0; z-index: 20; background: var(--bg); padding: 12px 0; margin-bottom: 8px; border-bottom: 1px solid var(--border); }
-  .toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .toolbar-spacer { flex: 1; }
+  /* Gantt wrapper + toolbar */
+  .gantt-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 16px; box-shadow: var(--shadow-sm); overflow: hidden; }
+  .gantt-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 20; background: var(--surface); }
+  .gantt-toolbar-left { display: flex; align-items: center; gap: 8px; }
+  .gantt-toolbar-right { display: flex; align-items: center; gap: 8px; }
+  .gantt-toggle { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-dim); cursor: pointer; user-select: none; }
+
+  /* Gantt chart */
+  .gantt-container { overflow-x: auto; padding-bottom: 8px; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+  .gantt-container::-webkit-scrollbar { height: 8px; }
+  .gantt-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  .gantt { position: relative; min-height: 200px; }
+  .gantt-header { display: flex; border-bottom: 2px solid var(--border); position: sticky; top: 0; background: var(--surface); z-index: 4; }
+  .gantt-month { text-align: center; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 0; border-right: 1px solid var(--border); }
+  .gantt-month:last-child { border-right: none; }
+  .gantt-body { position: relative; }
+  .gantt-row { display: flex; align-items: center; border-bottom: 1px solid var(--border); position: relative; transition: background 0.1s; }
+  .gantt-row:hover { background: rgba(59,130,246,0.02); }
+  .gantt-row.phase-row { background: var(--surface2); }
+  .gantt-row.dragging { opacity: 0.5; }
+  .gantt-row.drag-over { border-top: 2px solid var(--accent); }
+  .gantt-row:last-child { border-bottom: none; }
+  .gantt-label { min-width: 240px; width: 240px; padding: 0 12px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; z-index: 1; background: inherit; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; border-right: 1px solid var(--border); flex-shrink: 0; }
+  .gantt-label.task-label { font-size: 12px; font-weight: 400; padding-left: 20px; color: var(--text-dim); }
+  .gantt-label .display-id { font-family: var(--mono); font-size: 10px; color: var(--accent); flex-shrink: 0; }
+  .gantt-label .label-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .drag-handle { cursor: grab; color: var(--text-muted); font-size: 12px; flex-shrink: 0; padding: 2px; opacity: 0.4; }
+  .drag-handle:hover { opacity: 1; }
+  .gantt-track { flex: 1; height: 100%; position: relative; }
+
+  /* Gantt bars */
+  .gantt-bar { position: absolute; height: 20px; top: 50%; transform: translateY(-50%); border-radius: 4px; }
+  .gantt-bar-progress { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; }
+  .gantt-bar-label { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 10px; font-weight: 700; color: white; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,0.2); overflow: hidden; text-overflow: ellipsis; max-width: calc(100% - 16px); }
+  .gantt-task-bar { position: absolute; height: 14px; top: 50%; transform: translateY(-50%); border-radius: 3px; cursor: pointer; transition: box-shadow 0.15s; }
+  .gantt-task-bar:hover { filter: brightness(1.1); box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+  .gantt-task-bar.critical-bar { border: 2px solid var(--critical) !important; }
+  .gantt-task-bar.selected { box-shadow: 0 0 0 2px var(--accent); }
+  .gantt-diamond { position: absolute; top: 50%; width: 10px; height: 10px; transform: translate(-50%, -50%) rotate(45deg); border: 2px solid var(--warning); background: var(--surface); z-index: 2; cursor: pointer; }
+  .gantt-diamond.completed { background: var(--warning); }
+  .gantt-diamond.critical-ms { border-color: var(--critical); }
+  .gantt-diamond:hover { transform: translate(-50%, -50%) rotate(45deg) scale(1.3); }
+  .gantt-gridline { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--border); opacity: 0.4; pointer-events: none; }
+  .gantt-today { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--today); z-index: 3; pointer-events: none; }
+  .gantt-today::before { content: 'TODAY'; position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 9px; font-weight: 700; letter-spacing: 0.5px; color: var(--today); white-space: nowrap; }
+  .gantt-resize-handle { position: absolute; top: 0; bottom: 0; width: 8px; cursor: ew-resize; z-index: 5; }
+  .gantt-resize-handle.left { left: -4px; }
+  .gantt-resize-handle.right { right: -4px; }
+  .gantt-arrows { position: absolute; top: 0; left: 0; pointer-events: none; z-index: 2; }
 
   /* Tables */
   .phase-table { width: 100%; border-collapse: collapse; }
@@ -141,85 +194,48 @@ const CSS = `
   .phase-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 14px; vertical-align: middle; }
   .phase-table tr:last-child td { border-bottom: none; }
   .phase-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; vertical-align: middle; }
-  .phase-table input[type="date"], .phase-table input[type="number"] { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 6px 10px; border-radius: 6px; font-family: var(--mono); font-size: 13px; outline: none; }
+  .phase-table input[type="date"], .phase-table input[type="number"] {
+    background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+    padding: 6px 10px; border-radius: 6px; font-family: var(--mono); font-size: 13px; outline: none;
+  }
   .phase-table input:focus { border-color: var(--accent); }
   .phase-table input[type="number"] { width: 80px; text-align: center; }
   .phase-table input:disabled { opacity: 0.4; cursor: not-allowed; }
-  .progress-cell { display: flex; align-items: center; gap: 8px; }
-  .progress-track { flex: 1; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; min-width: 60px; }
-  .progress-fill { height: 100%; border-radius: 3px; transition: width 0.3s ease; }
-  .progress-label { font-size: 12px; color: var(--text-dim); font-family: var(--mono); min-width: 32px; }
+  .progress-cell { display: flex; align-items: center; gap: 6px; }
+  .progress-track { flex: 1; height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; min-width: 50px; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+  .progress-label { font-size: 11px; color: var(--text-muted); font-family: var(--mono); min-width: 30px; }
   .duration-display { font-size: 12px; color: var(--text-muted); font-family: var(--mono); }
 
-  /* Gantt */
-  .gantt-wrapper { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 20px; }
-  .gantt-container { overflow-x: auto; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
-  .gantt-container::-webkit-scrollbar { height: 8px; }
-  .gantt-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-  .gantt { position: relative; min-height: 200px; }
-  .gantt-header { display: flex; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); z-index: 2; }
-  .gantt-month { text-align: center; font-size: 11px; font-weight: 500; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 0; border-right: 1px solid var(--border); }
-  .gantt-month:last-child { border-right: none; }
-  .gantt-body { position: relative; }
-  .gantt-row { display: flex; align-items: center; height: 36px; border-bottom: 1px solid var(--border); position: relative; transition: background 0.1s; }
-  .gantt-row:hover { background: rgba(139,92,246,0.03); }
-  .gantt-row.phase-row { height: 44px; background: rgba(255,255,255,0.015); }
-  .gantt-row.dragging { opacity: 0.5; }
-  .gantt-row.drag-over { border-top: 2px solid var(--accent); }
-  .gantt-row:last-child { border-bottom: none; }
-  .gantt-label { width: 220px; min-width: 220px; padding: 0 12px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; z-index: 1; background: inherit; overflow: hidden; }
-  .gantt-label.task-label { font-size: 12px; font-weight: 400; padding-left: 20px; color: var(--text-dim); }
-  .gantt-label .display-id { font-family: var(--mono); font-size: 10px; color: var(--accent); flex-shrink: 0; }
-  .gantt-label .label-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .drag-handle { cursor: grab; color: var(--text-muted); font-size: 12px; flex-shrink: 0; padding: 2px; opacity: 0.4; }
-  .drag-handle:hover { opacity: 1; }
-  .gantt-track { flex: 1; height: 100%; position: relative; }
-  .gantt-bar { position: absolute; height: 24px; top: 10px; border-radius: 4px; opacity: 0.85; transition: opacity 0.15s; cursor: pointer; }
-  .gantt-bar:hover { opacity: 1; }
-  .gantt-bar.critical-bar { border: 2px solid var(--critical) !important; }
-  .gantt-bar-progress { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; opacity: 0.4; }
-  .gantt-bar-label { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 11px; font-weight: 600; color: white; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,0.3); overflow: hidden; text-overflow: ellipsis; max-width: calc(100% - 16px); }
-  .gantt-task-bar { position: absolute; height: 16px; top: 10px; border-radius: 3px; cursor: pointer; transition: opacity 0.15s; }
-  .gantt-task-bar:hover { opacity: 1; filter: brightness(1.15); }
-  .gantt-task-bar.critical-bar { border: 2px solid var(--critical) !important; }
-  .gantt-task-bar.selected { box-shadow: 0 0 0 2px var(--accent); }
-  .gantt-milestone { position: absolute; top: 50%; width: 12px; height: 12px; transform: translate(-50%, -50%) rotate(45deg); border: 2px solid #f59e0b; background: var(--surface); z-index: 2; cursor: pointer; }
-  .gantt-milestone.completed { background: #f59e0b; }
-  .gantt-milestone.critical-ms { border-color: var(--critical); }
-  .gantt-milestone:hover { transform: translate(-50%, -50%) rotate(45deg) scale(1.3); }
-  .gantt-gridline { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--border); opacity: 0.3; pointer-events: none; }
-  .gantt-today { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--today); z-index: 3; pointer-events: none; }
-  .gantt-today::before { content: 'TODAY'; position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 9px; font-weight: 700; letter-spacing: 0.5px; color: var(--today); white-space: nowrap; }
-  .gantt-resize-handle { position: absolute; top: 0; bottom: 0; width: 8px; cursor: ew-resize; z-index: 5; }
-  .gantt-resize-handle.left { left: -4px; }
-  .gantt-resize-handle.right { right: -4px; }
-
   /* Drawer */
-  .drawer-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 100; }
-  .drawer { position: fixed; top: 0; right: 0; bottom: 0; width: 400px; background: var(--surface); border-left: 1px solid var(--border); z-index: 101; display: flex; flex-direction: column; animation: slideIn 0.2s ease; }
-  @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
-  .drawer-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid var(--border); }
+  .drawer-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.2); z-index: 50; transition: opacity 0.25s; }
+  .drawer { position: fixed; top: 0; right: 0; bottom: 0; width: 420px; background: var(--surface); border-left: 1px solid var(--border); box-shadow: -4px 0 24px rgba(0,0,0,0.1); z-index: 51; transform: translateX(0); transition: transform 0.25s ease; overflow-y: auto; display: flex; flex-direction: column; }
+  .drawer-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
   .drawer-header h3 { font-size: 16px; font-weight: 600; }
-  .drawer-close { background: none; border: none; color: var(--text-dim); font-size: 18px; cursor: pointer; padding: 4px 8px; }
-  .drawer-close:hover { color: var(--text); }
-  .drawer-body { flex: 1; overflow-y: auto; padding: 24px; }
+  .drawer-close { width: 32px; height: 32px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text-muted); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .drawer-close:hover { color: var(--text); background: var(--surface2); }
+  .drawer-body { padding: 20px 24px; flex: 1; overflow-y: auto; }
   .drawer-field { margin-bottom: 16px; }
   .drawer-field label { display: block; font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-  .drawer-field input, .drawer-field select { width: 100%; padding: 8px 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: var(--font); font-size: 14px; outline: none; }
+  .drawer-field input, .drawer-field select {
+    width: 100%; padding: 8px 12px; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text); font-family: var(--font); font-size: 14px; outline: none;
+  }
   .drawer-field input:focus, .drawer-field select:focus { border-color: var(--accent); }
   .drawer-field input:disabled, .drawer-field select:disabled { opacity: 0.4; cursor: not-allowed; }
   .drawer-row { display: flex; gap: 12px; }
   .drawer-row .drawer-field { flex: 1; }
-  .drawer-anchor { padding: 8px 12px; background: var(--accent-dim); border-radius: 6px; font-size: 12px; color: var(--accent); margin-bottom: 16px; }
-  .drawer-summary { padding: 12px; background: var(--surface2); border-radius: 8px; font-size: 13px; margin-bottom: 20px; line-height: 1.6; }
-  .dep-type-row { display: flex; gap: 4px; margin-top: 8px; }
-  .dep-type-btn { padding: 4px 10px; font-size: 11px; font-family: var(--mono); background: var(--surface2); border: 1px solid var(--border); color: var(--text-dim); border-radius: 4px; cursor: pointer; }
+  .drawer-anchor { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; background: var(--accent-light); color: var(--accent); padding: 3px 8px; border-radius: 4px; font-weight: 600; margin-bottom: 12px; }
+  .drawer-summary { background: var(--surface2); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 16px; font-size: 13px; color: var(--text-dim); line-height: 1.8; }
+  .drawer-info { font-size: 12px; color: var(--accent); font-style: italic; margin-top: 4px; }
+  .dep-type-row { display: flex; gap: 4px; margin-top: 4px; }
+  .dep-type-btn { padding: 3px 8px; font-size: 11px; font-family: var(--mono); border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--text-muted); cursor: pointer; }
   .dep-type-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
-  .drawer-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
+  .drawer-footer { padding: 16px 24px; border-top: 1px solid var(--border); flex-shrink: 0; display: flex; gap: 8px; justify-content: flex-end; }
 
-  /* Export dialog */
-  .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 200; display: flex; align-items: center; justify-content: center; }
-  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px; width: 440px; max-height: 80vh; overflow-y: auto; }
+  /* Export / Modal dialog */
+  .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); z-index: 200; display: flex; align-items: center; justify-content: center; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px; width: 440px; max-height: 80vh; overflow-y: auto; box-shadow: var(--shadow); }
   .modal h3 { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
   .modal-section { margin-bottom: 20px; }
   .modal-section label.section-title { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 8px; }
@@ -228,26 +244,26 @@ const CSS = `
   .phase-check input[type="checkbox"] { accent-color: var(--accent); width: 14px; height: 14px; }
 
   /* Buttons */
-  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius); font-family: var(--font); font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; outline: none; }
+  .btn { display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; border-radius: var(--radius); font-family: var(--font); font-size: 13px; font-weight: 500; cursor: pointer; border: none; outline: none; transition: all 0.15s; }
   .btn:disabled { opacity: 0.4; cursor: not-allowed; }
   .btn-primary { background: var(--accent); color: white; }
-  .btn-primary:hover:not(:disabled) { background: #7c3aed; }
+  .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
   .btn-ghost { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
   .btn-ghost:hover:not(:disabled) { background: var(--surface2); color: var(--text); }
-  .btn-danger { background: transparent; color: var(--danger); border: 1px solid transparent; }
-  .btn-danger:hover:not(:disabled) { background: rgba(239,68,68,0.1); }
+  .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger-light); }
+  .btn-danger:hover:not(:disabled) { background: var(--danger-light); }
   .btn-sm { padding: 4px 10px; font-size: 12px; }
   .btn-group { display: flex; gap: 8px; }
 
-  .checkbox-wrap { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .checkbox-wrap { display: flex; align-items: center; cursor: pointer; gap: 8px; }
   .checkbox-wrap input { display: none; }
-  .checkbox-box { width: 16px; height: 16px; border: 2px solid var(--border); border-radius: 4px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .checkbox-box { width: 18px; height: 18px; border: 2px solid var(--border); border-radius: 4px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
   .checkbox-wrap input:checked + .checkbox-box { background: var(--accent); border-color: var(--accent); }
   .check-icon { color: white; font-size: 11px; font-weight: 700; }
 
-  .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+  .empty-state { text-align: center; padding: 48px 20px; color: var(--text-muted); }
   .empty-state p { font-size: 15px; margin-bottom: 8px; }
-  .save-indicator { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); }
+  .save-indicator { font-size: 12px; display: flex; align-items: center; gap: 4px; }
   .save-indicator.saving { color: var(--warning); }
   .save-indicator.saved { color: var(--success); }
   .save-indicator.error { color: var(--danger); }
@@ -258,12 +274,13 @@ const CSS = `
   .custom-phase-form input:focus { border-color: var(--accent); }
   .color-input { width: 32px; height: 32px; border: 1px solid var(--border); border-radius: 6px; padding: 2px; cursor: pointer; background: var(--surface2); }
 
+  /* Responsive */
   @media (max-width: 768px) {
     .app { padding: 16px; }
     .header { flex-direction: column; gap: 12px; align-items: flex-start; }
     .project-selector { flex-direction: column; }
     .project-selector select { min-width: 100%; }
-    .gantt-label { width: 140px; min-width: 140px; font-size: 12px; }
+    .gantt-label { width: 160px; min-width: 160px; }
     .drawer { width: 100%; }
     .modal { width: 90%; }
   }
@@ -288,21 +305,16 @@ function getMonthsBetween(s, e) {
   return months;
 }
 
-/** Sort tasks by sort_order (drag-drop), then by phase, then by date */
 function sortTasks(tasks, phaseSortMap) {
   return [...tasks].sort((a, b) => {
-    // Primary: explicit sort_order (from drag-drop)
     if (a.sort_order !== b.sort_order) return (a.sort_order || 0) - (b.sort_order || 0);
-    // Secondary: phase order
     const pa = phaseSortMap[a.phase_code] ?? 99, pb = phaseSortMap[b.phase_code] ?? 99;
     if (pa !== pb) return pa - pb;
-    // Tertiary: date
     if (a.start_date && b.start_date) return a.start_date.localeCompare(b.start_date);
     return 0;
   });
 }
 
-/** Assign display IDs */
 function assignDisplayIds(tasks, allPhases) {
   const counters = {};
   return tasks.map(t => {
@@ -314,45 +326,119 @@ function assignDisplayIds(tasks, allPhases) {
 
 
 /* ═══════════════════════════════════════════════════════════
-   CRITICAL PATH — Single Longest Path
+   CRITICAL PATH — Single Longest Dependency Chain
+   Only the single longest path through connected dependency
+   chains is marked as critical. All zero-float tasks within
+   the longest-spanning connected component are included.
    ═══════════════════════════════════════════════════════════ */
 
 function computeCriticalPath(tasks) {
   try {
     const dated = tasks.filter(t => t.start_date);
     if (dated.length < 2) return new Set();
+
+    // Build adjacency maps
     const successors = {}, predecessors = {};
-    dated.forEach(t => { if (t.depends_on) { if (!successors[t.depends_on]) successors[t.depends_on] = []; successors[t.depends_on].push(t.id); predecessors[t.id] = t.depends_on; } });
+    dated.forEach(t => {
+      if (t.depends_on) {
+        if (!successors[t.depends_on]) successors[t.depends_on] = [];
+        successors[t.depends_on].push(t.id);
+        predecessors[t.id] = t.depends_on;
+      }
+    });
+
+    // Only tasks that participate in at least one dependency
     const inChain = new Set();
     dated.forEach(t => { if (predecessors[t.id] || successors[t.id]) inChain.add(t.id); });
     const chainTasks = dated.filter(t => inChain.has(t.id));
     if (chainTasks.length < 2) return new Set();
 
-    // Connected components
+    // Find connected components via BFS
     const visited = new Set(), components = [];
-    function bfs(sid) { const c = new Set(), q = [sid]; while (q.length) { const id = q.shift(); if (c.has(id)) continue; c.add(id); visited.add(id); (successors[id]||[]).forEach(s => { if (inChain.has(s)&&!c.has(s)) q.push(s); }); if (predecessors[id]&&inChain.has(predecessors[id])&&!c.has(predecessors[id])) q.push(predecessors[id]); } return c; }
+    function bfs(sid) {
+      const c = new Set(), q = [sid];
+      while (q.length) {
+        const id = q.shift();
+        if (c.has(id)) continue;
+        c.add(id); visited.add(id);
+        (successors[id]||[]).forEach(s => { if (inChain.has(s) && !c.has(s)) q.push(s); });
+        if (predecessors[id] && inChain.has(predecessors[id]) && !c.has(predecessors[id])) q.push(predecessors[id]);
+      }
+      return c;
+    }
     chainTasks.forEach(t => { if (!visited.has(t.id)) components.push(bfs(t.id)); });
 
+    // For each component, compute forward/backward pass, find zero-float tasks
     let longestSpan = -1, longestCrit = new Set();
+
     for (const comp of components) {
       const ct = chainTasks.filter(t => comp.has(t.id));
       if (ct.length < 2) continue;
-      const dur = {}; ct.forEach(t => { dur[t.id] = t.end_date ? daysBetween(t.start_date, t.end_date) : 0; });
-      const inDeg = {}; ct.forEach(t => { inDeg[t.id] = 0; }); ct.forEach(t => { if (predecessors[t.id]&&comp.has(predecessors[t.id])) inDeg[t.id]++; });
-      const q = ct.filter(t => inDeg[t.id]===0).map(t=>t.id), topo = [], vis = new Set();
-      while (q.length) { const id = q.shift(); if (vis.has(id)) continue; vis.add(id); topo.push(id); (successors[id]||[]).forEach(s => { if (comp.has(s)&&!vis.has(s)) { inDeg[s]--; if (inDeg[s]<=0) q.push(s); } }); }
+
+      const dur = {};
+      ct.forEach(t => { dur[t.id] = t.end_date ? daysBetween(t.start_date, t.end_date) : 0; });
+
+      // Topological sort
+      const inDeg = {};
+      ct.forEach(t => { inDeg[t.id] = 0; });
+      ct.forEach(t => { if (predecessors[t.id] && comp.has(predecessors[t.id])) inDeg[t.id]++; });
+      const q = ct.filter(t => inDeg[t.id] === 0).map(t => t.id);
+      const topo = [], vis = new Set();
+      while (q.length) {
+        const id = q.shift();
+        if (vis.has(id)) continue;
+        vis.add(id); topo.push(id);
+        (successors[id]||[]).forEach(s => {
+          if (comp.has(s) && !vis.has(s)) { inDeg[s]--; if (inDeg[s] <= 0) q.push(s); }
+        });
+      }
+      // Add any not yet visited (cycle fallback)
       ct.forEach(t => { if (!vis.has(t.id)) topo.push(t.id); });
+
+      // Forward pass: earliest start / earliest finish
       const ES = {}, EF = {};
-      for (const id of topo) { const tk = ct.find(t=>t.id===id); if (!tk) continue; ES[id] = (predecessors[id]&&comp.has(predecessors[id])) ? EF[predecessors[id]]+(tk.gap_business_days||0) : 0; EF[id] = ES[id]+dur[id]; }
-      const compEnd = Math.max(...ct.map(t=>EF[t.id]).filter(v=>isFinite(v)));
+      for (const id of topo) {
+        const tk = ct.find(t => t.id === id);
+        if (!tk) continue;
+        ES[id] = (predecessors[id] && comp.has(predecessors[id]))
+          ? EF[predecessors[id]] + (tk.gap_business_days || 0)
+          : 0;
+        EF[id] = ES[id] + dur[id];
+      }
+
+      const compEnd = Math.max(...ct.map(t => EF[t.id]).filter(v => isFinite(v)));
       if (!isFinite(compEnd)) continue;
+
+      // Backward pass: latest start / latest finish
       const LF = {}, LS = {};
-      for (let i = topo.length-1; i >= 0; i--) { const id = topo[i]; const sc = (successors[id]||[]).filter(s=>comp.has(s)); LF[id] = sc.length===0 ? compEnd : Math.min(...sc.map(s => { const st = ct.find(t=>t.id===s); return LS[s]-(st?(st.gap_business_days||0):0); })); LS[id] = LF[id]-dur[id]; }
-      const crit = new Set(); ct.forEach(t => { if (LS[t.id]-ES[t.id]<=0) crit.add(t.id); });
-      if (compEnd > longestSpan) { longestSpan = compEnd; longestCrit = crit; }
+      for (let i = topo.length - 1; i >= 0; i--) {
+        const id = topo[i];
+        const sc = (successors[id] || []).filter(s => comp.has(s));
+        LF[id] = sc.length === 0
+          ? compEnd
+          : Math.min(...sc.map(s => {
+              const st = ct.find(t => t.id === s);
+              return LS[s] - (st ? (st.gap_business_days || 0) : 0);
+            }));
+        LS[id] = LF[id] - dur[id];
+      }
+
+      // Zero-float tasks = critical
+      const crit = new Set();
+      ct.forEach(t => { if (LS[t.id] - ES[t.id] <= 0) crit.add(t.id); });
+
+      // Only keep the longest-spanning component's critical set
+      if (compEnd > longestSpan) {
+        longestSpan = compEnd;
+        longestCrit = crit;
+      }
     }
+
     return longestCrit;
-  } catch (e) { console.warn('Critical path error:', e); return new Set(); }
+  } catch (e) {
+    console.warn('Critical path error:', e);
+    return new Set();
+  }
 }
 
 
@@ -372,23 +458,10 @@ function GanttChart({ allPhases, phaseMap, schedulePhases, tasks, selectedTaskId
     return <div className="empty-state"><p>No phases scheduled yet</p></div>;
   }
 
-  // Build rows: phase headers + tasks grouped under them
-  const rows = [];
-  const usedPhaseCodes = new Set([...phasesWithDates.map(p => p.phase_code), ...tasksWithDates.map(t => t.phase_code).filter(Boolean)]);
-  allPhases.forEach(pDef => {
-    if (!usedPhaseCodes.has(pDef.code)) return;
-    const phase = phasesWithDates.find(p => p.phase_code === pDef.code);
-    rows.push({ type: 'phase-header', pDef, phase });
-    tasksWithDates.filter(t => t.phase_code === pDef.code).forEach(t => rows.push({ type: 'task', pDef, t }));
-  });
-  // Unphased tasks under "Project Tasks"
-  const unphased = tasksWithDates.filter(t => !t.phase_code);
-  if (unphased.length) {
-    rows.unshift({ type: 'phase-header', pDef: { code: '__none', name: 'Project Tasks', color: '#6b7280' }, phase: null });
-    unphased.forEach(t => rows.splice(1, 0)); // placeholder
-  }
-  // Re-insert unphased at top
+  // Build rows: unphased first, then phase headers + tasks
   const finalRows = [];
+  const usedPhaseCodes = new Set([...phasesWithDates.map(p => p.phase_code), ...tasksWithDates.map(t => t.phase_code).filter(Boolean)]);
+
   const unphasedTasks = tasksWithDates.filter(t => !t.phase_code);
   if (unphasedTasks.length) {
     finalRows.push({ type: 'phase-header', pDef: { code: '__none', name: 'Project Tasks', color: '#6b7280' }, phase: null });
@@ -410,17 +483,22 @@ function GanttChart({ allPhases, phaseMap, schedulePhases, tasks, selectedTaskId
   const totalDays = daysBetween(minDate, maxDate);
   const pxPerDay = Math.max(4, Math.min(12, 1200 / totalDays));
   const totalWidth = totalDays * pxPerDay;
-  const labelWidth = 220;
+  const labelWidth = 240;
   const months = getMonthsBetween(minDate, maxDate);
   const getX = d => daysBetween(minDate, d) * pxPerDay;
   const today = todayStr(), todayX = getX(today);
 
-  const PH = 44, TH = 36;
+  const PH = 40, TH = 32;
   const rowYs = {};
   let totalHeight = 0;
-  finalRows.forEach(r => { const h = r.type === 'phase-header' ? PH : TH; const key = r.type === 'phase-header' ? `ph:${r.pDef.code}` : `t:${r.t.id}`; rowYs[key] = totalHeight + h/2; totalHeight += h; });
+  finalRows.forEach(r => {
+    const h = r.type === 'phase-header' ? PH : TH;
+    const key = r.type === 'phase-header' ? `ph:${r.pDef.code}` : `t:${r.t.id}`;
+    rowYs[key] = totalHeight + h/2;
+    totalHeight += h;
+  });
 
-  // Dep arrows
+  // Dependency arrows
   const depArrows = [];
   tasksWithDates.forEach(t => {
     if (!t.depends_on) return;
@@ -429,9 +507,14 @@ function GanttChart({ allPhases, phaseMap, schedulePhases, tasks, selectedTaskId
     const dt = t.dependency_type || 'FS';
     const fE = from.end_date || from.start_date, fS = from.start_date, tS = t.start_date, tE = t.end_date || t.start_date;
     let fX, tX;
-    switch(dt) { case'SS': fX=labelWidth+getX(fS); tX=labelWidth+getX(tS); break; case'FF': fX=labelWidth+getX(fE); tX=labelWidth+getX(tE); break; case'SF': fX=labelWidth+getX(fS); tX=labelWidth+getX(tE); break; default: fX=labelWidth+getX(fE); tX=labelWidth+getX(tS); }
+    switch(dt) {
+      case 'SS': fX=labelWidth+getX(fS); tX=labelWidth+getX(tS); break;
+      case 'FF': fX=labelWidth+getX(fE); tX=labelWidth+getX(tE); break;
+      case 'SF': fX=labelWidth+getX(fS); tX=labelWidth+getX(tE); break;
+      default:   fX=labelWidth+getX(fE); tX=labelWidth+getX(tS);
+    }
     const fY = rowYs[`t:${from.id}`], tY = rowYs[`t:${t.id}`];
-    if (fY===undefined || tY===undefined) return;
+    if (fY === undefined || tY === undefined) return;
     depArrows.push({ fromX:fX, toX:tX, fromY:fY, toY:tY, isCrit: showCritical && criticalSet.has(t.id) && criticalSet.has(from.id) });
   });
 
@@ -446,7 +529,11 @@ function GanttChart({ allPhases, phaseMap, schedulePhases, tasks, selectedTaskId
     e.stopPropagation(); e.preventDefault();
     const task = tasksWithDates.find(t => t.id === taskId); if (!task) return;
     const sX = e.clientX, oS = task.start_date, oE = task.end_date || task.start_date;
-    const onMove = me => { const dd = Math.round((me.clientX - sX) / pxPerDay); if (side==='right') { const ne = addDays(oE, dd); if (daysBetween(oS, ne)>0) onResizeEnd(taskId, 'end_date', ne); } else { const ns = addDays(oS, dd); if (daysBetween(ns, oE)>0) onResizeEnd(taskId, 'start_date', ns); } };
+    const onMove = me => {
+      const dd = Math.round((me.clientX - sX) / pxPerDay);
+      if (side === 'right') { const ne = addDays(oE, dd); if (daysBetween(oS, ne) > 0) onResizeEnd(taskId, 'end_date', ne); }
+      else { const ns = addDays(oS, dd); if (daysBetween(ns, oE) > 0) onResizeEnd(taskId, 'start_date', ns); }
+    };
     const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
     window.addEventListener('mousemove', onMove); window.addEventListener('mouseup', onUp);
   };
@@ -455,32 +542,41 @@ function GanttChart({ allPhases, phaseMap, schedulePhases, tasks, selectedTaskId
     <div className="gantt-container">
       <div className="gantt" style={{ width: totalWidth + labelWidth }}>
         <div className="gantt-header">
-          <div style={{ width: labelWidth, minWidth: labelWidth, padding: '8px 12px', fontSize: 11, fontWeight: 500, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Task / Phase</div>
+          <div style={{ width: labelWidth, minWidth: labelWidth, padding: '6px 12px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', borderRight: '1px solid var(--border)' }}>Task / Phase</div>
           <div style={{ flex: 1, display: 'flex' }}>
-            {months.map((m,i) => { const ms = m.start.toISOString().split('T')[0], me = m.end.toISOString().split('T')[0]; const w = daysBetween(ms<minDate?minDate:ms, me>maxDate?maxDate:me)*pxPerDay; return <div key={i} className="gantt-month" style={{width:w}}>{m.label}</div>; })}
+            {months.map((m,i) => {
+              const ms = m.start.toISOString().split('T')[0], me = m.end.toISOString().split('T')[0];
+              const w = daysBetween(ms<minDate?minDate:ms, me>maxDate?maxDate:me)*pxPerDay;
+              return <div key={i} className="gantt-month" style={{width:w}}>{m.label}</div>;
+            })}
           </div>
         </div>
         <div className="gantt-body" style={{ minHeight: totalHeight }}>
           {months.map((m,i) => { const ms = m.start.toISOString().split('T')[0]; return ms>=minDate&&ms<=maxDate ? <div key={`g${i}`} className="gantt-gridline" style={{left:labelWidth+getX(ms)}} /> : null; })}
           {today>=minDate&&today<=maxDate && <div className="gantt-today" style={{left:labelWidth+todayX}} />}
 
-          <svg style={{ position:'absolute', width:totalWidth+labelWidth, height:totalHeight, pointerEvents:'none', zIndex:1 }}>
+          <svg className="gantt-arrows" style={{ width:totalWidth+labelWidth, height:totalHeight }}>
             <defs>
               <marker id="arr" viewBox="0 0 6 6" refX="6" refY="3" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 6 3 L 0 6 z" fill="var(--text-muted)" /></marker>
               <marker id="arr-c" viewBox="0 0 6 6" refX="6" refY="3" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 6 3 L 0 6 z" fill="var(--critical)" /></marker>
             </defs>
-            {depArrows.map((a,i) => { const mx = (a.fromX+a.toX)/2; return <path key={i} d={`M ${a.fromX} ${a.fromY} C ${mx} ${a.fromY}, ${mx} ${a.toY}, ${a.toX} ${a.toY}`} stroke={a.isCrit?'var(--critical)':'var(--text-muted)'} strokeWidth={a.isCrit?2:1.5} fill="none" markerEnd={a.isCrit?'url(#arr-c)':'url(#arr)'} />; })}
+            {depArrows.map((a,i) => {
+              const mx = (a.fromX+a.toX)/2;
+              return <path key={i} d={`M ${a.fromX} ${a.fromY} C ${mx} ${a.fromY}, ${mx} ${a.toY}, ${a.toX} ${a.toY}`}
+                stroke={a.isCrit?'var(--critical)':'var(--text-muted)'} strokeWidth={a.isCrit?2:1.5} fill="none"
+                markerEnd={a.isCrit?'url(#arr-c)':'url(#arr)'} />;
+            })}
           </svg>
 
           {finalRows.map((row, ri) => {
             if (row.type === 'phase-header') {
               const { pDef, phase } = row;
               return (
-                <div key={`ph-${pDef.code}`} className="gantt-row phase-row">
+                <div key={`ph-${pDef.code}`} className="gantt-row phase-row" style={{height:PH}}>
                   <div className="gantt-label"><span className="phase-dot" style={{background:pDef.color}} /><span className="label-text" style={{fontWeight:600}}>{pDef.name}</span></div>
                   <div className="gantt-track">
-                    {phase && <div className="gantt-bar" style={{ left: getX(phase.phase_start), width: Math.max(daysBetween(phase.phase_start, phase.phase_end)*pxPerDay, 4), background: `${pDef.color}55`, border: `1px solid ${pDef.color}` }}>
-                      <div className="gantt-bar-progress" style={{ width: `${phase.percent_complete||0}%`, background: pDef.color }} />
+                    {phase && <div className="gantt-bar" style={{ left: getX(phase.phase_start), width: Math.max(daysBetween(phase.phase_start, phase.phase_end)*pxPerDay, 4), background: `${pDef.color}44`, border: `1px solid ${pDef.color}` }}>
+                      <div className="gantt-bar-progress" style={{ width: `${phase.percent_complete||0}%`, background: pDef.color, opacity: 0.35 }} />
                       {daysBetween(phase.phase_start, phase.phase_end)*pxPerDay > 80 && <span className="gantt-bar-label">{pDef.name} — {formatShortDate(phase.phase_start)} – {formatShortDate(phase.phase_end)}</span>}
                     </div>}
                   </div>
@@ -496,10 +592,10 @@ function GanttChart({ allPhases, phaseMap, schedulePhases, tasks, selectedTaskId
             return (
               <div key={`t-${t.id}`}
                 className={`gantt-row ${isDragging?'dragging':''} ${isDragOver?'drag-over':''}`}
+                style={{ height: TH, background: isCrit ? 'rgba(239,68,68,0.04)' : undefined }}
                 draggable={canEdit} onDragStart={e=>handleDragStart(e,t.id)} onDragOver={e=>handleDragOver(e,t.id)}
                 onDrop={e=>handleDrop(e,t.id)} onDragEnd={handleDragEnd}
                 onClick={() => onSelectTask(t.id)}
-                style={isCrit ? { background: 'rgba(239,68,68,0.05)' } : undefined}
               >
                 <div className="gantt-label task-label">
                   {canEdit && <span className="drag-handle" title="Drag to reorder">⋮⋮</span>}
@@ -508,7 +604,7 @@ function GanttChart({ allPhases, phaseMap, schedulePhases, tasks, selectedTaskId
                 </div>
                 <div className="gantt-track">
                   {isMs ? (
-                    <div className={`gantt-milestone ${t.is_completed?'completed':''} ${isCrit?'critical-ms':''}`} style={{left:getX(t.start_date)}} />
+                    <div className={`gantt-diamond ${t.is_completed?'completed':''} ${isCrit?'critical-ms':''}`} style={{left:getX(t.start_date)}} />
                   ) : (
                     <div className={`gantt-task-bar ${isCrit?'critical-bar':''} ${isSel?'selected':''}`}
                       style={{ left: getX(t.start_date), width: Math.max(daysBetween(t.start_date, t.end_date)*pxPerDay, 4), background: `${pDef.color}88`, border: `1px solid ${pDef.color}` }}>
@@ -534,16 +630,24 @@ function TaskDrawer({ task, tasks, allPhases, phaseMap, canEdit, onUpdate, onDat
   if (!task) return null;
   const isTask = task.end_date && task.start_date !== task.end_date;
   const anchor = task.phase_anchor;
+  const color = phaseMap[task.phase_code]?.color || '#6b7280';
+
   return (
     <>
       <div className="drawer-overlay" onClick={onClose} />
       <div className="drawer">
-        <div className="drawer-header"><h3>{isTask ? 'Edit Task' : 'Edit Milestone'}</h3><button className="drawer-close" onClick={onClose}>✕</button></div>
+        <div className="drawer-header">
+          <h3>
+            <span style={{width:12,height:12,borderRadius:isTask?3:0,transform:isTask?'none':'rotate(45deg)',background:isTask?color:'transparent',border:isTask?'none':`2px solid ${color}`,display:'inline-block',marginRight:8,verticalAlign:'middle'}} />
+            {isTask ? 'Edit Task' : 'Edit Milestone'}
+          </h3>
+          <button className="drawer-close" onClick={onClose}>✕</button>
+        </div>
         <div className="drawer-body">
           {anchor && <div className="drawer-anchor">⊳ Locked to {phaseMap[anchor.split('_')[0]]?.name||''} {anchor.split('_')[1]?.toLowerCase()||''}</div>}
           <div className="drawer-summary">
             <span style={{fontFamily:'var(--mono)',fontSize:12,color:'var(--accent)',marginRight:6}}>{task._displayId||''}</span>
-            <strong>{task.milestone_name||'(unnamed)'}</strong><br/>
+            <strong style={{color:'var(--text)'}}>{task.milestone_name||'(unnamed)'}</strong><br/>
             {task.start_date && <span>{formatShortDate(task.start_date)}{isTask?` → ${formatShortDate(task.end_date)}`:''}<br/></span>}
             {task.duration_business_days ? <span>{task.duration_business_days} business days<br/></span> : null}
             {task.phase_code && <span>Phase: {phaseMap[task.phase_code]?.name||task.phase_code}</span>}
@@ -584,7 +688,7 @@ function TaskDrawer({ task, tasks, allPhases, phaseMap, canEdit, onUpdate, onDat
 
 
 /* ═══════════════════════════════════════════════════════════
-   EXPORT DIALOG
+   EXPORT DIALOG — Phase filtering + date range
    ═══════════════════════════════════════════════════════════ */
 
 function ExportDialog({ allPhases, onExport, onClose }) {
@@ -624,7 +728,6 @@ function ExportDialog({ allPhases, onExport, onClose }) {
               {p.name}
             </label>
           ))}
-          {/* Include unphased tasks option */}
           <label className="phase-check">
             <input type="checkbox" checked={selectedPhases.has('__none')} onChange={() => togglePhase('__none')} />
             <span className="phase-dot" style={{ background: '#6b7280' }} />
@@ -635,14 +738,8 @@ function ExportDialog({ allPhases, onExport, onClose }) {
         <div className="modal-section">
           <label className="section-title">Date Range (optional)</label>
           <div className="drawer-row">
-            <div className="drawer-field">
-              <label>From</label>
-              <input type="date" value={dateStart} onChange={e => setDateStart(e.target.value)} />
-            </div>
-            <div className="drawer-field">
-              <label>To</label>
-              <input type="date" value={dateEnd} onChange={e => setDateEnd(e.target.value)} />
-            </div>
+            <div className="drawer-field"><label>From</label><input type="date" value={dateStart} onChange={e => setDateStart(e.target.value)} /></div>
+            <div className="drawer-field"><label>To</label><input type="date" value={dateEnd} onChange={e => setDateEnd(e.target.value)} /></div>
           </div>
           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Leave blank to include full timeline</div>
         </div>
@@ -664,14 +761,20 @@ function ExportDialog({ allPhases, onExport, onClose }) {
    ═══════════════════════════════════════════════════════════ */
 
 let jspdfMod = null;
-async function loadJsPDF() { if (jspdfMod) return jspdfMod; const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'; await new Promise((r, j) => { s.onload = r; s.onerror = j; document.head.appendChild(s); }); jspdfMod = window.jspdf; return jspdfMod; }
+async function loadJsPDF() {
+  if (jspdfMod) return jspdfMod;
+  const s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+  await new Promise((r, j) => { s.onload = r; s.onerror = j; document.head.appendChild(s); });
+  jspdfMod = window.jspdf;
+  return jspdfMod;
+}
 
 async function exportPDF(project, allPhases, phaseMap, schedulePhases, tasks, criticalSet, opts) {
   const { jsPDF } = await loadJsPDF();
   const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: [792, 1224] });
   const W = 1224, H = 792, M = 36, CW = W - M*2;
 
-  // Filter tasks by selected phases
   const selPhases = opts.phases || new Set();
   const filteredTasks = tasks.filter(t => {
     if (!t.phase_code) return selPhases.has('__none');
@@ -693,7 +796,6 @@ async function exportPDF(project, allPhases, phaseMap, schedulePhases, tasks, cr
   const pWD = filteredSchedulePhases.filter(p => p.phase_start && p.phase_end);
   const sT = filteredTasks.filter(t => t.start_date);
   const rows = [];
-  // Unphased first
   const unphased = sT.filter(t => !t.phase_code);
   if (unphased.length && selPhases.has('__none')) {
     rows.push({ type: 'phase', pDef: { name: 'Project Tasks', color: '#6b7280' }, phase: null });
@@ -711,11 +813,10 @@ async function exportPDF(project, allPhases, phaseMap, schedulePhases, tasks, cr
   if (!rows.length) { doc.save(`ESa_Schedule_${project.project_number}.pdf`); return; }
 
   // Timeline
-  const aD = pWD.flatMap(p=>[p.phase_start,p.phase_end]);
+  const aD = pWD.flatMap(p => [p.phase_start, p.phase_end]);
   sT.forEach(t => { aD.push(t.start_date); if(t.end_date) aD.push(t.end_date); }); aD.push(todayStr()); aD.sort();
 
   let cMin = addDays(aD[0], -7), cMax = addDays(aD[aD.length-1], 7);
-  // Apply date range filter
   if (opts.dateStart) cMin = opts.dateStart;
   if (opts.dateEnd) cMax = opts.dateEnd;
 
@@ -762,7 +863,7 @@ async function exportPDF(project, allPhases, phaseMap, schedulePhases, tasks, cr
       const nm=t.milestone_name||'(unnamed)'; const dn=nm.length>38?nm.substring(0,37)+'…':nm;
       doc.setFontSize(6.5); doc.setFont('helvetica',isCrit?'bold':'normal');
       const did=t._displayId||'';
-      if(did){doc.setTextColor(139,92,246);doc.text(did,M+16,mY+2);doc.setTextColor(isCrit?180:80,isCrit?40:80,isCrit?40:80);doc.text(dn,M+16+doc.getTextWidth(did)+4,mY+2);}
+      if(did){doc.setTextColor(59,130,246);doc.text(did,M+16,mY+2);doc.setTextColor(isCrit?180:80,isCrit?40:80,isCrit?40:80);doc.text(dn,M+16+doc.getTextWidth(did)+4,mY+2);}
       else{doc.setTextColor(80);doc.text(dn,M+16,mY+2);}
       if(isMs){const mx=cLeft+gX(t.start_date),sz=4;doc.setFillColor(isCrit?239:245,isCrit?68:158,isCrit?68:11);doc.triangle(mx,mY-sz,mx+sz,mY,mx,mY+sz,'F');doc.triangle(mx,mY-sz,mx,mY+sz,mx-sz,mY,'F');}
       else{const bx=cLeft+gX(t.start_date),bw=Math.max(daysBetween(t.start_date,t.end_date)*ppd,2);const[r,g,b]=hexToRGB(pDef.color);doc.setFillColor(r,g,b);doc.roundedRect(bx,mY-3,bw,6,1,1,'F');if(isCrit){doc.setDrawColor(239,68,68);doc.setLineWidth(1);doc.roundedRect(bx,mY-3,bw,6,1,1,'D');}}
@@ -823,7 +924,7 @@ function PhaseEditor({ allPhases, schedulePhases, customPhases, canEdit, onUpdat
                 <td><span className="duration-display">{dur!==null?`${dur}d (${(dur/7).toFixed(1)}w)`:'—'}</span></td>
                 <td><input type="number" min="0" value={phase.budgeted_hours??''} disabled={!canEdit} onChange={e=>onUpdate(pDef.code,'budgeted_hours',parseInt(e.target.value)||null)} /></td>
                 <td><div className="progress-cell">
-                  <input type="number" min="0" max="100" value={phase.percent_complete??0} disabled={!canEdit} onChange={e=>onUpdate(pDef.code,'percent_complete',Math.min(100,Math.max(0,parseInt(e.target.value)||0)))} />
+                  <input type="number" min="0" max="100" value={phase.percent_complete??0} disabled={!canEdit} onChange={e=>onUpdate(pDef.code,'percent_complete',Math.min(100,Math.max(0,parseInt(e.target.value)||0)))} style={{width:56}} />
                   <div className="progress-track"><div className="progress-fill" style={{width:`${phase.percent_complete||0}%`,background:pDef.color}} /></div>
                   <span className="progress-label">{phase.percent_complete||0}%</span>
                 </div></td>
@@ -920,11 +1021,9 @@ export default function App() {
         supabase.from('custom_phases').select('*').eq('project_number', selectedProject).order('sort_order'),
       ]);
 
-      // Custom phases
       setCustomPhases(cpR.data || []);
       const allP = mergePhases(cpR.data || []);
 
-      // Schedule phases
       let lp = (phR.data||[]).map(p => ({...p, phase_code: p.phase, start_date: p.phase_start, end_date: p.phase_end, sort_order: allP.findIndex(ph=>ph.code===p.phase)+1 }));
       const existing = new Set(lp.map(p=>p.phase_code));
       const missing = BUILTIN_PHASES.filter(p=>!existing.has(p.code));
@@ -936,7 +1035,6 @@ export default function App() {
       lp.sort((a,b)=>a.sort_order-b.sort_order);
       setSchedulePhases(lp);
 
-      // Tasks - sort by sort_order
       const loadedTasks = (tkR.data||[]).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
       setTasks(loadedTasks);
     })();
@@ -1021,13 +1119,9 @@ export default function App() {
       const dragIdx = items.findIndex(t => t.id === draggedId);
       const targetIdx = items.findIndex(t => t.id === targetId);
       if (dragIdx === -1 || targetIdx === -1) return prev;
-
       const [dragged] = items.splice(dragIdx, 1);
       items.splice(targetIdx, 0, dragged);
-
-      // Reassign sort_order
       const updated = items.map((t, i) => ({ ...t, sort_order: (i + 1) * 10 }));
-      // Save sort_orders
       updated.forEach(t => {
         const orig = prev.find(o => o.id === t.id);
         if (orig && orig.sort_order !== t.sort_order) {
@@ -1043,9 +1137,7 @@ export default function App() {
     const{data,error}=await supabase.from('custom_phases').insert({project_number:selectedProject,...phaseData}).select().single();
     if(data) {
       setCustomPhases(prev=>[...prev,data]);
-      // Create schedule row for this custom phase
       await supabase.from('schedule').insert({project_number:selectedProject,phase:data.code,phase_start:null,phase_end:null,budgeted_hours:null,percent_complete:0,active:true}).select().single();
-      // Reload schedule phases
       const{data:sched}=await supabase.from('schedule').select('*').eq('project_number',selectedProject);
       if(sched) {
         const allP = mergePhases([...customPhases, data]);
@@ -1057,9 +1149,7 @@ export default function App() {
 
   const handleDeleteCustomPhase = useCallback(async (id, code) => {
     await supabase.from('custom_phases').delete().eq('id', id);
-    // Remove schedule row for this phase
     await supabase.from('schedule').delete().eq('project_number', selectedProject).eq('phase', code);
-    // Unset phase_code on any tasks using this phase
     setTasks(prev => prev.map(t => t.phase_code === code ? { ...t, phase_code: null } : t));
     tasks.filter(t => t.phase_code === code).forEach(t => {
       debouncedSave('schedule_milestones', t.id, { phase_code: null });
@@ -1102,7 +1192,7 @@ export default function App() {
         <h1><span className="logo">ESa</span> Schedule</h1>
         <div className="header-right">
           {saveStatus!=='idle' && <div className={`save-indicator ${saveStatus}`}>{saveStatus==='saving'&&'● Saving...'}{saveStatus==='saved'&&'✓ Saved'}{saveStatus==='error'&&'✕ Save failed'}</div>}
-          {currentUser && selectedProject && <div className="user-badge">{currentUser}{userRole ? <span className="role-tag">{userRole}</span> : <span className="role-tag" style={{background:'rgba(239,68,68,0.1)',color:'var(--danger)'}}>View Only</span>}</div>}
+          {currentUser && selectedProject && <div className="user-badge">{currentUser}{userRole ? <span className="role-tag">{userRole}</span> : <span className="role-tag" style={{background:'var(--danger-light)',color:'var(--danger)'}}>View Only</span>}</div>}
         </div>
       </div>
 
@@ -1125,25 +1215,24 @@ export default function App() {
             {currentPhase && <><span>|</span><span className="status-dot" style={{background:currentPhase.color}} /><span style={{color:currentPhase.color,fontWeight:500}}>Currently in {currentPhase.name}</span></>}
           </div>
 
-          {/* Sticky toolbar */}
-          <div className="sticky-toolbar">
-            <div className="toolbar">
-              {canEdit && <div className="btn-group">
-                <button className="btn btn-ghost btn-sm" onClick={()=>handleAddTask(true)}>+ Task</button>
-                <button className="btn btn-ghost btn-sm" onClick={()=>handleAddTask(false)}>+ Milestone</button>
-              </div>}
-              <div className="toolbar-spacer" />
-              <label className="checkbox-wrap" style={{fontSize:13}}>
-                <input type="checkbox" checked={showCritical} onChange={e=>setShowCritical(e.target.checked)} />
-                <span className="checkbox-box">{showCritical&&<span className="check-icon">✓</span>}</span><span>Critical Path</span>
-              </label>
-              <button className="btn btn-ghost btn-sm" onClick={handleUndo} disabled={!undoStack.current.length} title="Undo (Ctrl+Z)">↩ Undo</button>
-              <button className="btn btn-ghost btn-sm" onClick={()=>setShowExport(true)}>↓ Export PDF</button>
+          {/* Gantt Chart with sticky toolbar */}
+          <div className="gantt-wrap">
+            <div className="gantt-toolbar">
+              <div className="gantt-toolbar-left">
+                {canEdit && <>
+                  <button className="btn btn-ghost btn-sm" onClick={()=>handleAddTask(true)}>+ Task</button>
+                  <button className="btn btn-ghost btn-sm" onClick={()=>handleAddTask(false)}>+ Milestone</button>
+                </>}
+              </div>
+              <div className="gantt-toolbar-right">
+                <label className="gantt-toggle">
+                  <input type="checkbox" checked={showCritical} onChange={e=>setShowCritical(e.target.checked)} style={{accentColor:'var(--accent)', width:14, height:14}} />
+                  <span>Critical Path</span>
+                </label>
+                <button className="btn btn-ghost btn-sm" onClick={handleUndo} disabled={!undoStack.current.length} title="Undo (Ctrl+Z)">↩ Undo</button>
+                <button className="btn btn-ghost btn-sm" onClick={()=>setShowExport(true)}>↓ Export PDF</button>
+              </div>
             </div>
-          </div>
-
-          {/* Gantt Chart */}
-          <div className="gantt-wrapper">
             <GanttChart
               allPhases={allPhases} phaseMap={phaseMap} schedulePhases={schedulePhases} tasks={sortedTasks}
               selectedTaskId={selectedTaskId} onSelectTask={id=>setSelectedTaskId(id)}
@@ -1169,13 +1258,13 @@ export default function App() {
                 <tbody>{sortedTasks.map(t => {
                   const isCrit = showCritical && criticalSet.has(t.id);
                   return (
-                    <tr key={t.id} onClick={()=>setSelectedTaskId(t.id)} style={{cursor:'pointer',background:selectedTaskId===t.id?'var(--accent-dim)':isCrit?'rgba(239,68,68,0.06)':undefined}}>
-                      <td><span className="display-id">{t._displayId||''}</span></td>
+                    <tr key={t.id} onClick={()=>setSelectedTaskId(t.id)} style={{cursor:'pointer',background:selectedTaskId===t.id?'var(--accent-light)':isCrit?'rgba(239,68,68,0.04)':undefined}}>
+                      <td><span className="display-id" style={{fontFamily:'var(--mono)',fontSize:11,color:'var(--accent)'}}>{t._displayId||''}</span></td>
                       <td>{t.milestone_name||<span style={{color:'var(--text-muted)'}}>(unnamed)</span>}</td>
                       <td>{t.phase_code&&<><span className="phase-dot" style={{background:phaseMap[t.phase_code]?.color}} />{phaseMap[t.phase_code]?.name}</>}</td>
                       <td style={{fontFamily:'var(--mono)',fontSize:12}}>{formatShortDate(t.start_date)}</td>
                       <td style={{fontFamily:'var(--mono)',fontSize:12}}>{formatShortDate(t.end_date)}</td>
-                      <td>{t.depends_on&&(()=>{const d=sortedTasks.find(x=>x.id===t.depends_on);return d?<span style={{fontSize:12}}><span className="display-id">{d._displayId}</span> {t.dependency_type||'FS'}{t.gap_business_days?` +${t.gap_business_days}d`:''}</span>:null;})()}</td>
+                      <td>{t.depends_on&&(()=>{const d=sortedTasks.find(x=>x.id===t.depends_on);return d?<span style={{fontSize:12}}><span style={{fontFamily:'var(--mono)',color:'var(--accent)'}}>{d._displayId}</span> {t.dependency_type||'FS'}{t.gap_business_days?` +${t.gap_business_days}d`:''}</span>:null;})()}</td>
                       <td>{t.is_completed?<span style={{color:'var(--success)',fontSize:12,fontWeight:600}}>✓ Done</span>:isCrit?<span style={{color:'var(--critical)',fontSize:11,fontWeight:600}}>CRITICAL</span>:null}</td>
                     </tr>
                   );
