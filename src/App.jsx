@@ -274,12 +274,30 @@ const CSS = `
   .custom-phase-form input:focus { border-color: var(--accent); }
   .color-input { width: 32px; height: 32px; border: 1px solid var(--border); border-radius: 6px; padding: 2px; cursor: pointer; background: var(--surface2); }
 
+  /* Search-select (project typeahead) */
+  .selector-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .user-select-wrap { min-width: 240px; }
+  .user-select-wrap select { width: 100%; padding: 9px 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); font-family: var(--font); font-size: 14px; color: var(--text); outline: none; cursor: pointer; }
+  .user-select-wrap select:focus { border-color: var(--accent); }
+  .search-select { position: relative; min-width: 320px; flex: 1; max-width: 480px; }
+  .search-select input { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: var(--radius); font-family: var(--font); font-size: 14px; color: var(--text); background: var(--surface2); outline: none; }
+  .search-select input::placeholder { color: var(--text-muted); }
+  .search-select input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+  .search-select .dropdown { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-top: 4px; max-height: 280px; overflow-y: auto; z-index: 30; box-shadow: var(--shadow); }
+  .search-select .dropdown-item { padding: 8px 12px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+  .search-select .dropdown-item:hover { background: var(--accent-light); }
+  .search-select .dropdown-item .proj-num { font-family: var(--mono); font-size: 12px; color: var(--text-muted); min-width: 70px; }
+  .search-select .dropdown-item .proj-name { color: var(--text); }
+  .search-select .dropdown-item .proj-role { margin-left: auto; font-size: 10px; text-transform: uppercase; color: var(--accent); font-weight: 700; letter-spacing: 0.3px; }
+  .search-select .no-results { padding: 12px; text-align: center; color: var(--text-muted); font-size: 13px; }
+
   /* Responsive */
   @media (max-width: 768px) {
     .app { padding: 16px; }
-    .header { flex-direction: column; gap: 12px; align-items: flex-start; }
-    .project-selector { flex-direction: column; }
-    .project-selector select { min-width: 100%; }
+    .header { flex-direction: column; gap: 10px; align-items: flex-start; }
+    .selector-row { flex-direction: column; }
+    .search-select { min-width: 100%; max-width: 100%; }
+    .user-select-wrap { min-width: 100%; }
     .gantt-label { width: 160px; min-width: 160px; }
     .drawer { width: 100%; }
     .modal { width: 90%; }
@@ -322,6 +340,92 @@ function assignDisplayIds(tasks, allPhases) {
     counters[prefix] = (counters[prefix] || 0) + 1;
     return { ...t, _displayId: `${prefix}-${counters[prefix]}` };
   });
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   PROJECT SEARCH SELECT — Typeahead filtered by user
+   ═══════════════════════════════════════════════════════════ */
+
+function ProjectSearchSelect({ projects, currentUser, selectedProject, onSelect }) {
+  const [search, setSearch] = useState('');
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef(null);
+  const inputRef = useRef(null);
+
+  // Filter projects to only those where currentUser is PM, DM, or Principal
+  const userProjects = useMemo(() => {
+    if (!currentUser) return [];
+    const u = currentUser.toLowerCase();
+    return projects.filter(p =>
+      [p.pm, p.dm, p.principal].some(r => r && r.toLowerCase() === u)
+    );
+  }, [projects, currentUser]);
+
+  // Further filter by search term
+  const filtered = useMemo(() => {
+    if (!search.trim()) return userProjects;
+    const s = search.toLowerCase();
+    return userProjects.filter(p =>
+      p.project_number.toLowerCase().includes(s) ||
+      (p.project_name && p.project_name.toLowerCase().includes(s))
+    );
+  }, [userProjects, search]);
+
+  // Get user's role on a project
+  const getRole = (proj) => {
+    if (!currentUser) return '';
+    const u = currentUser.toLowerCase();
+    if (proj.principal && proj.principal.toLowerCase() === u) return 'Principal';
+    if (proj.dm && proj.dm.toLowerCase() === u) return 'DM';
+    if (proj.pm && proj.pm.toLowerCase() === u) return 'PM';
+    return '';
+  };
+
+  // Click outside to close
+  useEffect(() => {
+    const handler = (e) => { if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // Display value
+  const selected = projects.find(p => p.project_number === selectedProject);
+  const displayValue = open ? search : selected ? `${selected.project_number} — ${selected.project_name}` : '';
+
+  return (
+    <div className="search-select" ref={wrapRef}>
+      <input
+        ref={inputRef}
+        type="text"
+        placeholder={currentUser ? `Search ${userProjects.length} projects...` : 'Select your name first...'}
+        value={displayValue}
+        disabled={!currentUser}
+        onChange={e => { setSearch(e.target.value); setOpen(true); }}
+        onFocus={() => { setSearch(''); setOpen(true); }}
+      />
+      {open && currentUser && (
+        <div className="dropdown">
+          {filtered.length === 0 ? (
+            <div className="no-results">No matching projects</div>
+          ) : (
+            filtered.map(p => (
+              <div key={p.project_number} className="dropdown-item" onClick={() => {
+                onSelect(p.project_number);
+                setOpen(false);
+                setSearch('');
+                inputRef.current?.blur();
+              }}>
+                <span className="proj-num">{p.project_number}</span>
+                <span className="proj-name">{p.project_name}</span>
+                <span className="proj-role">{getRole(p)}</span>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 
@@ -1198,9 +1302,11 @@ export default function App() {
 
       {/* Project selector */}
       <div className="card">
-        <div className="project-selector">
-          <select value={currentUser} onChange={e=>setCurrentUser(e.target.value)} className="user-select"><option value="">Select your name...</option>{employees.map(n=><option key={n} value={n}>{n}</option>)}</select>
-          <select value={selectedProject||''} onChange={e=>setSelectedProject(e.target.value||null)}><option value="">Select a project...</option>{projects.map(p=><option key={p.project_number} value={p.project_number}>{p.project_number} — {p.project_name}</option>)}</select>
+        <div className="selector-row">
+          <div className="user-select-wrap">
+            <select value={currentUser} onChange={e=>{setCurrentUser(e.target.value);setSelectedProject(null);}}><option value="">Select your name...</option>{employees.map(n=><option key={n} value={n}>{n}</option>)}</select>
+          </div>
+          <ProjectSearchSelect projects={projects} currentUser={currentUser} selectedProject={selectedProject} onSelect={setSelectedProject} />
         </div>
       </div>
 
