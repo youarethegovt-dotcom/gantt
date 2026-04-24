@@ -124,6 +124,7 @@ const CSS = `
 
   /* Sticky top section */
   .sticky-top { position: sticky; top: 0; z-index: 25; background: var(--bg); padding-bottom: 4px; }
+  .gantt-toolbar-sticky { position: sticky; top: 0; z-index: 22; background: var(--surface); border-bottom: 1px solid var(--border); }
 
   /* Cards */
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
@@ -150,9 +151,7 @@ const CSS = `
   .gantt-toggle { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-dim); cursor: pointer; user-select: none; }
 
   /* Gantt chart */
-  .gantt-container { overflow-x: auto; padding-bottom: 8px; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
-  .gantt-container::-webkit-scrollbar { height: 8px; }
-  .gantt-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  .gantt-container { padding-bottom: 8px; }
   .gantt { position: relative; min-height: 200px; }
   .gantt-header { display: flex; border-bottom: 2px solid var(--border); position: sticky; top: 0; background: var(--surface); z-index: 4; }
   .gantt-month { text-align: center; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 0; border-right: 1px solid var(--border); }
@@ -164,8 +163,8 @@ const CSS = `
   .gantt-row.dragging { opacity: 0.5; }
   .gantt-row.drag-over { border-top: 2px solid var(--accent); }
   .gantt-row:last-child { border-bottom: none; }
-  .gantt-label { min-width: 240px; width: 240px; padding: 0 12px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; z-index: 1; background: inherit; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; border-right: 1px solid var(--border); flex-shrink: 0; }
-  .gantt-label.task-label { font-size: 12px; font-weight: 400; padding-left: 20px; color: var(--text-dim); }
+  .gantt-label { min-width: 180px; width: 180px; padding: 0 10px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; z-index: 1; background: inherit; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; border-right: 1px solid var(--border); flex-shrink: 0; }
+  .gantt-label.task-label { font-size: 12px; font-weight: 400; padding-left: 16px; color: var(--text-dim); }
   .gantt-label .display-id { font-family: var(--mono); font-size: 10px; color: var(--accent); flex-shrink: 0; }
   .gantt-label .label-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .drag-handle { cursor: grab; color: var(--text-muted); font-size: 12px; flex-shrink: 0; padding: 2px; opacity: 0.4; }
@@ -555,26 +554,12 @@ function computeCriticalPath(tasks) {
    ═══════════════════════════════════════════════════════════ */
 
 function GanttChart({ allPhases, phaseMap, schedulePhases, tasks, selectedTaskId, onSelectTask,
-  criticalSet, showCritical, canEdit, onResizeEnd, onReorder }) {
+  criticalSet, showCritical, canEdit, onResizeEnd, onReorder, wrapRef, containerWidth }) {
 
   const phasesWithDates = schedulePhases.filter(p => p.phase_start && p.phase_end);
   const tasksWithDates = tasks.filter(t => t.start_date);
   const [dragId, setDragId] = useState(null);
   const [dragOverId, setDragOverId] = useState(null);
-  const containerRef = useRef(null);
-  const [containerWidth, setContainerWidth] = useState(1200);
-
-  // Measure container width and respond to resize
-  useEffect(() => {
-    const measure = () => {
-      if (containerRef.current) {
-        setContainerWidth(containerRef.current.clientWidth);
-      }
-    };
-    measure();
-    window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
-  }, []);
 
   if (!phasesWithDates.length && !tasksWithDates.length) {
     return <div className="empty-state"><p>No phases scheduled yet</p></div>;
@@ -603,8 +588,8 @@ function GanttChart({ allPhases, phaseMap, schedulePhases, tasks, selectedTaskId
   const sorted = allDates.sort();
   const minDate = addDays(sorted[0], -14), maxDate = addDays(sorted[sorted.length-1], 14);
   const totalDays = daysBetween(minDate, maxDate);
-  const labelWidth = 240;
-  const trackWidth = Math.max(800, containerWidth - labelWidth - 20);
+  const labelWidth = 180;
+  const trackWidth = Math.max(600, containerWidth - labelWidth - 2);
   const pxPerDay = trackWidth / totalDays;
   const totalWidth = trackWidth;
   const months = getMonthsBetween(minDate, maxDate);
@@ -662,7 +647,7 @@ function GanttChart({ allPhases, phaseMap, schedulePhases, tasks, selectedTaskId
   };
 
   return (
-    <div className="gantt-container" ref={containerRef}>
+    <div className="gantt-container">
       <div className="gantt" style={{ width: totalWidth + labelWidth }}>
         <div className="gantt-header">
           <div style={{ width: labelWidth, minWidth: labelWidth, padding: '6px 12px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', borderRight: '1px solid var(--border)' }}>Task / Phase</div>
@@ -1097,6 +1082,18 @@ export default function App() {
 
   const undoStack = useRef([]);
   const saveTimeout = useRef({});
+  const ganttWrapRef = useRef(null);
+  const [ganttWidth, setGanttWidth] = useState(1200);
+
+  // Measure gantt wrapper width
+  useEffect(() => {
+    const measure = () => {
+      if (ganttWrapRef.current) setGanttWidth(ganttWrapRef.current.clientWidth);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [selectedProject]);
 
   // Derived: merged phase list
   const allPhases = useMemo(() => mergePhases(customPhases), [customPhases]);
@@ -1345,7 +1342,7 @@ export default function App() {
       ) : (
         <>
           {/* Gantt Chart with sticky toolbar */}
-          <div className="gantt-wrap">
+          <div className="gantt-wrap" ref={ganttWrapRef}>
             <div className="gantt-toolbar">
               <div className="gantt-toolbar-left">
                 {canEdit && <>
@@ -1367,6 +1364,7 @@ export default function App() {
               selectedTaskId={selectedTaskId} onSelectTask={id=>setSelectedTaskId(id)}
               criticalSet={criticalSet} showCritical={showCritical} canEdit={canEdit}
               onResizeEnd={(id,f,v)=>handleTaskDateChange(id,f,v)} onReorder={handleReorder}
+              containerWidth={ganttWidth}
             />
           </div>
 
