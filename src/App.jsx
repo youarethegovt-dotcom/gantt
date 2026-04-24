@@ -601,9 +601,9 @@ function GanttChart({ allPhases, phaseMap, schedulePhases, tasks, selectedTaskId
   const minDate = addDays(sorted[0], -14), maxDate = addDays(sorted[sorted.length-1], 14);
   const totalDays = daysBetween(minDate, maxDate);
   const labelWidth = 240;
-  const availableWidth = Math.max(800, containerWidth - labelWidth - 40);
-  const pxPerDay = Math.max(4, availableWidth / totalDays);
-  const totalWidth = totalDays * pxPerDay;
+  const trackWidth = Math.max(800, containerWidth - labelWidth - 20);
+  const pxPerDay = trackWidth / totalDays;
+  const totalWidth = trackWidth;
   const months = getMonthsBetween(minDate, maxDate);
   const getX = d => daysBetween(minDate, d) * pxPerDay;
   const today = todayStr(), todayX = getX(today);
