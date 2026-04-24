@@ -410,20 +410,16 @@ function lightenColor(hex, t) { const [r, g, b] = hexToRGB(hex); return [Math.ro
 
 
 /* ═══════════════════════════════════════════════════════════
-   CRITICAL PATH — FIXED ALGORITHM (proper CPM)
+   CRITICAL PATH — Single Longest Path
 
-   Previous bugs:
-   1. ES/EF were computed from calendar dates, not via forward pass
-      through the dependency graph. This meant float was calculated
-      based on where tasks were placed rather than where dependencies
-      required them, causing random tasks to appear critical.
-   2. Standalone tasks (no deps) were incorrectly included.
-   3. Backward pass used array order instead of reverse topo order.
+   Finds the single dependency chain that determines the overall
+   project end date. Only tasks on that chain are marked critical.
 
-   Fix: Proper two-pass CPM. Forward pass computes ES/EF from
-   dependency graph using durations (root tasks get ES=0). Backward
-   pass computes LF/LS in reverse topological order. Float = LS - ES.
-   Only tasks in dependency chains are candidates.
+   1. Find all connected components (independent dep chains)
+   2. For each, run a proper two-pass CPM (forward for ES/EF,
+      backward for LS/LF) using durations, not calendar dates
+   3. Only the component with the longest total span is "the"
+      critical path — its zero-float tasks get marked
    ═══════════════════════════════════════════════════════════ */
 
 function computeCriticalPath(tasks) {
@@ -442,78 +438,100 @@ function computeCriticalPath(tasks) {
       }
     });
 
-    // Only tasks in a dependency chain can be critical
+    // Only tasks in a dependency chain
     const inChain = new Set();
     dated.forEach(t => { if (predecessors[t.id] || successors[t.id]) inChain.add(t.id); });
     const chainTasks = dated.filter(t => inChain.has(t.id));
     if (chainTasks.length < 2) return new Set();
 
-    // Duration in days for each task (milestones = 0)
-    const duration = {};
-    chainTasks.forEach(t => {
-      duration[t.id] = t.end_date ? daysBetween(t.start_date, t.end_date) : 0;
-    });
-
-    // Topological sort (Kahn's algorithm)
-    const inDeg = {};
-    chainTasks.forEach(t => { inDeg[t.id] = 0; });
-    chainTasks.forEach(t => { if (predecessors[t.id] && inChain.has(predecessors[t.id])) inDeg[t.id]++; });
-    const q = chainTasks.filter(t => inDeg[t.id] === 0).map(t => t.id);
-    const topo = [];
-    const vis = new Set();
-    while (q.length) {
-      const id = q.shift();
-      if (vis.has(id)) continue;
-      vis.add(id);
-      topo.push(id);
-      (successors[id] || []).forEach(s => {
-        if (inChain.has(s) && !vis.has(s)) { inDeg[s]--; if (inDeg[s] <= 0) q.push(s); }
-      });
-    }
-    chainTasks.forEach(t => { if (!vis.has(t.id)) topo.push(t.id); });
-
-    // FORWARD PASS: compute ES/EF from dependency graph, not calendar dates
-    // ES = max(predecessor EF + gap); root tasks get ES = 0
-    // EF = ES + duration
-    const ES = {}, EF = {};
-    for (const id of topo) {
-      const task = chainTasks.find(t => t.id === id);
-      if (!task) continue;
-      if (predecessors[id] && inChain.has(predecessors[id])) {
-        const gap = task.gap_business_days || 0;
-        ES[id] = EF[predecessors[id]] + gap;
-      } else {
-        ES[id] = 0;
+    // Find connected components via BFS
+    const visited = new Set();
+    const components = [];
+    function bfs(startId) {
+      const comp = new Set();
+      const queue = [startId];
+      while (queue.length) {
+        const id = queue.shift();
+        if (comp.has(id)) continue;
+        comp.add(id);
+        visited.add(id);
+        (successors[id] || []).forEach(s => { if (inChain.has(s) && !comp.has(s)) queue.push(s); });
+        if (predecessors[id] && inChain.has(predecessors[id]) && !comp.has(predecessors[id])) queue.push(predecessors[id]);
       }
-      EF[id] = ES[id] + duration[id];
+      return comp;
     }
+    chainTasks.forEach(t => { if (!visited.has(t.id)) components.push(bfs(t.id)); });
 
-    const projectEnd = Math.max(...chainTasks.map(t => EF[t.id]).filter(v => isFinite(v)));
-    if (!isFinite(projectEnd)) return new Set();
+    // Evaluate each component — keep only the longest
+    let longestSpan = -1;
+    let longestCritSet = new Set();
 
-    // BACKWARD PASS: compute LF/LS in reverse topological order
-    // LF = min(successor LS - gap); leaf tasks get LF = projectEnd
-    // LS = LF - duration
-    const LF = {}, LS = {};
-    for (let i = topo.length - 1; i >= 0; i--) {
-      const id = topo[i];
-      const succs = (successors[id] || []).filter(s => inChain.has(s));
-      if (succs.length === 0) {
-        LF[id] = projectEnd;
-      } else {
-        LF[id] = Math.min(...succs.map(s => {
-          const succTask = chainTasks.find(t => t.id === s);
-          const gap = succTask ? (succTask.gap_business_days || 0) : 0;
-          return LS[s] - gap;
-        }));
+    for (const comp of components) {
+      const ct = chainTasks.filter(t => comp.has(t.id));
+      if (ct.length < 2) continue;
+
+      const dur = {};
+      ct.forEach(t => { dur[t.id] = t.end_date ? daysBetween(t.start_date, t.end_date) : 0; });
+
+      // Topo sort within component
+      const inDeg = {};
+      ct.forEach(t => { inDeg[t.id] = 0; });
+      ct.forEach(t => { if (predecessors[t.id] && comp.has(predecessors[t.id])) inDeg[t.id]++; });
+      const q = ct.filter(t => inDeg[t.id] === 0).map(t => t.id);
+      const topo = [];
+      const vis = new Set();
+      while (q.length) {
+        const id = q.shift();
+        if (vis.has(id)) continue;
+        vis.add(id);
+        topo.push(id);
+        (successors[id] || []).forEach(s => { if (comp.has(s) && !vis.has(s)) { inDeg[s]--; if (inDeg[s] <= 0) q.push(s); } });
       }
-      LS[id] = LF[id] - duration[id];
+      ct.forEach(t => { if (!vis.has(t.id)) topo.push(t.id); });
+
+      // Forward pass: ES/EF from dependency graph
+      const ES = {}, EF = {};
+      for (const id of topo) {
+        const task = ct.find(t => t.id === id);
+        if (!task) continue;
+        if (predecessors[id] && comp.has(predecessors[id])) {
+          ES[id] = EF[predecessors[id]] + (task.gap_business_days || 0);
+        } else {
+          ES[id] = 0;
+        }
+        EF[id] = ES[id] + dur[id];
+      }
+
+      const compEnd = Math.max(...ct.map(t => EF[t.id]).filter(v => isFinite(v)));
+      if (!isFinite(compEnd)) continue;
+
+      // Backward pass: LF/LS in reverse topo order
+      const LF = {}, LS = {};
+      for (let i = topo.length - 1; i >= 0; i--) {
+        const id = topo[i];
+        const succs = (successors[id] || []).filter(s => comp.has(s));
+        if (succs.length === 0) {
+          LF[id] = compEnd;
+        } else {
+          LF[id] = Math.min(...succs.map(s => {
+            const st = ct.find(t => t.id === s);
+            return LS[s] - (st ? (st.gap_business_days || 0) : 0);
+          }));
+        }
+        LS[id] = LF[id] - dur[id];
+      }
+
+      // Zero-float tasks in this component
+      const critInComp = new Set();
+      ct.forEach(t => { if (LS[t.id] - ES[t.id] <= 0) critInComp.add(t.id); });
+
+      if (compEnd > longestSpan) {
+        longestSpan = compEnd;
+        longestCritSet = critInComp;
+      }
     }
 
-    // Total Float = LS - ES. Critical when float = 0.
-    const result = new Set();
-    chainTasks.forEach(t => { if (LS[t.id] - ES[t.id] <= 0) result.add(t.id); });
-    return result;
+    return longestCritSet;
   } catch (err) {
     console.warn('Critical path calc error:', err);
     return new Set();
