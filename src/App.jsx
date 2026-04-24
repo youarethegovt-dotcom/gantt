@@ -163,10 +163,13 @@ const CSS = `
   .gantt-row.dragging { opacity: 0.5; }
   .gantt-row.drag-over { border-top: 2px solid var(--accent); }
   .gantt-row:last-child { border-bottom: none; }
-  .gantt-label { min-width: 180px; width: 180px; padding: 0 10px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; z-index: 1; background: inherit; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; border-right: 1px solid var(--border); flex-shrink: 0; }
+  .gantt-label { min-width: 120px; padding: 0 10px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; z-index: 1; background: inherit; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; border-right: 1px solid var(--border); flex-shrink: 0; }
   .gantt-label.task-label { font-size: 12px; font-weight: 400; padding-left: 16px; color: var(--text-dim); }
   .gantt-label .display-id { font-family: var(--mono); font-size: 10px; color: var(--accent); flex-shrink: 0; }
   .gantt-label .label-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .label-resize-handle { position: absolute; right: 0; top: 0; bottom: 0; width: 6px; cursor: col-resize; z-index: 5; background: transparent; }
+  .label-resize-handle:hover { background: var(--accent-light); }
+  .label-resize-handle:active { background: var(--accent); opacity: 0.3; }
   .drag-handle { cursor: grab; color: var(--text-muted); font-size: 12px; flex-shrink: 0; padding: 2px; opacity: 0.4; }
   .drag-handle:hover { opacity: 1; }
   .gantt-track { flex: 1; height: 100%; position: relative; }
@@ -179,6 +182,7 @@ const CSS = `
   .gantt-task-bar:hover { filter: brightness(1.1); box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
   .gantt-task-bar.critical-bar { border: 2px solid var(--critical) !important; }
   .gantt-task-bar.selected { box-shadow: 0 0 0 2px var(--accent); }
+  .gantt-task-bar-label { position: absolute; left: 4px; right: 4px; top: 50%; transform: translateY(-50%); font-size: 10px; font-weight: 500; color: rgba(255,255,255,0.95); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 2px rgba(0,0,0,0.3); pointer-events: none; }
   .gantt-diamond { position: absolute; top: 50%; width: 10px; height: 10px; transform: translate(-50%, -50%) rotate(45deg); border: 2px solid var(--warning); background: var(--surface); z-index: 2; cursor: pointer; }
   .gantt-diamond.completed { background: var(--warning); }
   .gantt-diamond.critical-ms { border-color: var(--critical); }
@@ -560,6 +564,21 @@ function GanttChart({ allPhases, phaseMap, schedulePhases, tasks, selectedTaskId
   const tasksWithDates = tasks.filter(t => t.start_date);
   const [dragId, setDragId] = useState(null);
   const [dragOverId, setDragOverId] = useState(null);
+  const [labelWidth, setLabelWidth] = useState(220);
+
+  // Draggable label column resize
+  const handleLabelResize = useCallback((e) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startW = labelWidth;
+    const onMove = (me) => {
+      const newW = Math.max(120, Math.min(500, startW + (me.clientX - startX)));
+      setLabelWidth(newW);
+    };
+    const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }, [labelWidth]);
 
   if (!phasesWithDates.length && !tasksWithDates.length) {
     return <div className="empty-state"><p>No phases scheduled yet</p></div>;
@@ -588,7 +607,6 @@ function GanttChart({ allPhases, phaseMap, schedulePhases, tasks, selectedTaskId
   const sorted = allDates.sort();
   const minDate = addDays(sorted[0], -14), maxDate = addDays(sorted[sorted.length-1], 14);
   const totalDays = daysBetween(minDate, maxDate);
-  const labelWidth = 180;
   const trackWidth = Math.max(600, containerWidth - labelWidth - 2);
   const pxPerDay = trackWidth / totalDays;
   const totalWidth = trackWidth;
@@ -650,7 +668,10 @@ function GanttChart({ allPhases, phaseMap, schedulePhases, tasks, selectedTaskId
     <div className="gantt-container">
       <div className="gantt" style={{ width: totalWidth + labelWidth }}>
         <div className="gantt-header">
-          <div style={{ width: labelWidth, minWidth: labelWidth, padding: '6px 12px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', borderRight: '1px solid var(--border)' }}>Task / Phase</div>
+          <div style={{ width: labelWidth, minWidth: labelWidth, padding: '6px 12px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', borderRight: '1px solid var(--border)', position: 'relative', flexShrink: 0 }}>
+            Task / Phase
+            <div className="label-resize-handle" onMouseDown={handleLabelResize} />
+          </div>
           <div style={{ flex: 1, display: 'flex' }}>
             {months.map((m,i) => {
               const ms = m.start.toISOString().split('T')[0], me = m.end.toISOString().split('T')[0];
@@ -681,7 +702,7 @@ function GanttChart({ allPhases, phaseMap, schedulePhases, tasks, selectedTaskId
               const { pDef, phase } = row;
               return (
                 <div key={`ph-${pDef.code}`} className="gantt-row phase-row" style={{height:PH}}>
-                  <div className="gantt-label"><span className="phase-dot" style={{background:pDef.color}} /><span className="label-text" style={{fontWeight:600}}>{pDef.name}</span></div>
+                  <div className="gantt-label" style={{width:labelWidth,minWidth:labelWidth}}><span className="phase-dot" style={{background:pDef.color}} /><span className="label-text" style={{fontWeight:600}}>{pDef.name}</span></div>
                   <div className="gantt-track">
                     {phase && <div className="gantt-bar" style={{ left: getX(phase.phase_start), width: Math.max(daysBetween(phase.phase_start, phase.phase_end)*pxPerDay, 4), background: `${pDef.color}44`, border: `1px solid ${pDef.color}` }}>
                       <div className="gantt-bar-progress" style={{ width: `${phase.percent_complete||0}%`, background: pDef.color, opacity: 0.35 }} />
@@ -705,7 +726,7 @@ function GanttChart({ allPhases, phaseMap, schedulePhases, tasks, selectedTaskId
                 onDrop={e=>handleDrop(e,t.id)} onDragEnd={handleDragEnd}
                 onClick={() => onSelectTask(t.id)}
               >
-                <div className="gantt-label task-label">
+                <div className="gantt-label task-label" style={{width:labelWidth,minWidth:labelWidth}}>
                   {canEdit && <span className="drag-handle" title="Drag to reorder">⋮⋮</span>}
                   <span className="display-id">{t._displayId||''}</span>
                   <span className="label-text">{t.milestone_name||'(unnamed)'}</span>
@@ -716,6 +737,7 @@ function GanttChart({ allPhases, phaseMap, schedulePhases, tasks, selectedTaskId
                   ) : (
                     <div className={`gantt-task-bar ${isCrit?'critical-bar':''} ${isSel?'selected':''}`}
                       style={{ left: getX(t.start_date), width: Math.max(daysBetween(t.start_date, t.end_date)*pxPerDay, 4), background: `${pDef.color}88`, border: `1px solid ${pDef.color}` }}>
+                      {daysBetween(t.start_date, t.end_date)*pxPerDay > 30 && <span className="gantt-task-bar-label">{t.milestone_name||''}</span>}
                       {canEdit && <><div className="gantt-resize-handle left" onMouseDown={e=>handleResizeStart(e,t.id,'left')} /><div className="gantt-resize-handle right" onMouseDown={e=>handleResizeStart(e,t.id,'right')} /></>}
                     </div>
                   )}
