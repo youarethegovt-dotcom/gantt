@@ -112,7 +112,7 @@ const CSS = `
     --mono: 'JetBrains Mono', 'SF Mono', monospace;
   }
   body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.5; -webkit-font-smoothing: antialiased; }
-  .app { max-width: 1500px; margin: 0 auto; padding: 24px; }
+  .app { max-width: 100%; margin: 0 auto; padding: 24px 40px; }
 
   /* Header */
   .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
@@ -558,6 +558,20 @@ function GanttChart({ allPhases, phaseMap, schedulePhases, tasks, selectedTaskId
   const tasksWithDates = tasks.filter(t => t.start_date);
   const [dragId, setDragId] = useState(null);
   const [dragOverId, setDragOverId] = useState(null);
+  const containerRef = useRef(null);
+  const [containerWidth, setContainerWidth] = useState(1200);
+
+  // Measure container width and respond to resize
+  useEffect(() => {
+    const measure = () => {
+      if (containerRef.current) {
+        setContainerWidth(containerRef.current.clientWidth);
+      }
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
 
   if (!phasesWithDates.length && !tasksWithDates.length) {
     return <div className="empty-state"><p>No phases scheduled yet</p></div>;
@@ -586,9 +600,10 @@ function GanttChart({ allPhases, phaseMap, schedulePhases, tasks, selectedTaskId
   const sorted = allDates.sort();
   const minDate = addDays(sorted[0], -14), maxDate = addDays(sorted[sorted.length-1], 14);
   const totalDays = daysBetween(minDate, maxDate);
-  const pxPerDay = Math.max(4, Math.min(12, 1200 / totalDays));
-  const totalWidth = totalDays * pxPerDay;
   const labelWidth = 240;
+  const availableWidth = Math.max(800, containerWidth - labelWidth - 40);
+  const pxPerDay = Math.max(4, availableWidth / totalDays);
+  const totalWidth = totalDays * pxPerDay;
   const months = getMonthsBetween(minDate, maxDate);
   const getX = d => daysBetween(minDate, d) * pxPerDay;
   const today = todayStr(), todayX = getX(today);
@@ -644,7 +659,7 @@ function GanttChart({ allPhases, phaseMap, schedulePhases, tasks, selectedTaskId
   };
 
   return (
-    <div className="gantt-container">
+    <div className="gantt-container" ref={containerRef}>
       <div className="gantt" style={{ width: totalWidth + labelWidth }}>
         <div className="gantt-header">
           <div style={{ width: labelWidth, minWidth: labelWidth, padding: '6px 12px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', borderRight: '1px solid var(--border)' }}>Task / Phase</div>
