@@ -84,6 +84,7 @@ function makePhaseMap(allPhases) { return Object.fromEntries(allPhases.map(p => 
 function makePhaseSortMap(allPhases) { return Object.fromEntries(allPhases.map(p => [p.code, p.sort])); }
 
 function getPhasePrefix(code, allPhases) {
+  if (!code) return null;
   if (BUILTIN_PREFIX[code]) return BUILTIN_PREFIX[code];
   return code.substring(0, 2).toUpperCase();
 }
