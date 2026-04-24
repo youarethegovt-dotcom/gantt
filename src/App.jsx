@@ -410,17 +410,20 @@ function lightenColor(hex, t) { const [r, g, b] = hexToRGB(hex); return [Math.ro
 
 
 /* ═══════════════════════════════════════════════════════════
-   CRITICAL PATH — FIXED ALGORITHM
+   CRITICAL PATH — FIXED ALGORITHM (proper CPM)
 
    Previous bugs:
-   1. Standalone tasks (no deps) were marked critical if they ended
-      near the project end — their lateFinish was initialized to
-      projectEnd, giving zero slack by coincidence.
-   2. Backward pass iterated in array order, not reverse topological
-      order, missing some predecessor constraints.
+   1. ES/EF were computed from calendar dates, not via forward pass
+      through the dependency graph. This meant float was calculated
+      based on where tasks were placed rather than where dependencies
+      required them, causing random tasks to appear critical.
+   2. Standalone tasks (no deps) were incorrectly included.
+   3. Backward pass used array order instead of reverse topo order.
 
-   Fix: Only tasks participating in a dependency chain can be critical.
-   Backward pass uses reverse topological order via Kahn's algorithm.
+   Fix: Proper two-pass CPM. Forward pass computes ES/EF from
+   dependency graph using durations (root tasks get ES=0). Backward
+   pass computes LF/LS in reverse topological order. Float = LS - ES.
+   Only tasks in dependency chains are candidates.
    ═══════════════════════════════════════════════════════════ */
 
 function computeCriticalPath(tasks) {
@@ -439,24 +442,19 @@ function computeCriticalPath(tasks) {
       }
     });
 
-    // Only tasks in a dependency chain
+    // Only tasks in a dependency chain can be critical
     const inChain = new Set();
     dated.forEach(t => { if (predecessors[t.id] || successors[t.id]) inChain.add(t.id); });
     const chainTasks = dated.filter(t => inChain.has(t.id));
     if (chainTasks.length < 2) return new Set();
 
-    const allDates = chainTasks.flatMap(t => [t.start_date, t.end_date || t.start_date]).filter(Boolean).sort();
-    if (!allDates.length) return new Set();
-    const minDate = allDates[0];
-    const dayOff = d => daysBetween(minDate, d || minDate);
+    // Duration in days for each task (milestones = 0)
+    const duration = {};
+    chainTasks.forEach(t => {
+      duration[t.id] = t.end_date ? daysBetween(t.start_date, t.end_date) : 0;
+    });
 
-    const ES = {}, EF = {};
-    chainTasks.forEach(t => { ES[t.id] = dayOff(t.start_date); EF[t.id] = dayOff(t.end_date || t.start_date); });
-
-    const projectEnd = Math.max(...chainTasks.map(t => EF[t.id]).filter(v => isFinite(v)));
-    if (!isFinite(projectEnd)) return new Set();
-
-    // Topological sort (Kahn's)
+    // Topological sort (Kahn's algorithm)
     const inDeg = {};
     chainTasks.forEach(t => { inDeg[t.id] = 0; });
     chainTasks.forEach(t => { if (predecessors[t.id] && inChain.has(predecessors[t.id])) inDeg[t.id]++; });
@@ -474,29 +472,47 @@ function computeCriticalPath(tasks) {
     }
     chainTasks.forEach(t => { if (!vis.has(t.id)) topo.push(t.id); });
 
-    // Backward pass
-    const LF = {}, LS = {};
-    chainTasks.forEach(t => {
-      const succs = (successors[t.id] || []).filter(s => inChain.has(s));
-      if (succs.length === 0) LF[t.id] = projectEnd;
-    });
+    // FORWARD PASS: compute ES/EF from dependency graph, not calendar dates
+    // ES = max(predecessor EF + gap); root tasks get ES = 0
+    // EF = ES + duration
+    const ES = {}, EF = {};
+    for (const id of topo) {
+      const task = chainTasks.find(t => t.id === id);
+      if (!task) continue;
+      if (predecessors[id] && inChain.has(predecessors[id])) {
+        const gap = task.gap_business_days || 0;
+        ES[id] = EF[predecessors[id]] + gap;
+      } else {
+        ES[id] = 0;
+      }
+      EF[id] = ES[id] + duration[id];
+    }
 
+    const projectEnd = Math.max(...chainTasks.map(t => EF[t.id]).filter(v => isFinite(v)));
+    if (!isFinite(projectEnd)) return new Set();
+
+    // BACKWARD PASS: compute LF/LS in reverse topological order
+    // LF = min(successor LS - gap); leaf tasks get LF = projectEnd
+    // LS = LF - duration
+    const LF = {}, LS = {};
     for (let i = topo.length - 1; i >= 0; i--) {
       const id = topo[i];
       const succs = (successors[id] || []).filter(s => inChain.has(s));
-      if (succs.length > 0) {
-        const minSucc = Math.min(...succs.map(s => {
-          const st = chainTasks.find(t => t.id === s);
-          return st ? ES[s] - (st.gap_business_days || 0) : projectEnd;
+      if (succs.length === 0) {
+        LF[id] = projectEnd;
+      } else {
+        LF[id] = Math.min(...succs.map(s => {
+          const succTask = chainTasks.find(t => t.id === s);
+          const gap = succTask ? (succTask.gap_business_days || 0) : 0;
+          return LS[s] - gap;
         }));
-        LF[id] = LF[id] !== undefined ? Math.min(LF[id], minSucc) : minSucc;
       }
-      if (LF[id] === undefined) LF[id] = projectEnd;
-      LS[id] = LF[id] - (EF[id] - ES[id]);
+      LS[id] = LF[id] - duration[id];
     }
 
+    // Total Float = LS - ES. Critical when float = 0.
     const result = new Set();
-    chainTasks.forEach(t => { if ((LS[t.id] ?? 0) - ES[t.id] <= 0) result.add(t.id); });
+    chainTasks.forEach(t => { if (LS[t.id] - ES[t.id] <= 0) result.add(t.id); });
     return result;
   } catch (err) {
     console.warn('Critical path calc error:', err);
