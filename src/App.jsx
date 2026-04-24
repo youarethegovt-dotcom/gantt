@@ -145,7 +145,7 @@ const CSS = `
 
   /* Gantt wrapper + toolbar */
   .gantt-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 16px; box-shadow: var(--shadow-sm); overflow: visible; }
-  .gantt-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 20; background: var(--surface); border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+  .gantt-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; margin-top: 8px; border-bottom: 1px solid var(--border); background: var(--bg); }
   .gantt-toolbar-left { display: flex; align-items: center; gap: 8px; }
   .gantt-toolbar-right { display: flex; align-items: center; gap: 8px; }
   .gantt-toggle { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-dim); cursor: pointer; user-select: none; }
@@ -153,7 +153,7 @@ const CSS = `
   /* Gantt chart */
   .gantt-container { padding-bottom: 8px; }
   .gantt { position: relative; min-height: 200px; }
-  .gantt-header { display: flex; border-bottom: 2px solid var(--border); position: sticky; top: 0; background: var(--surface); z-index: 4; }
+  .gantt-header { display: flex; border-bottom: 2px solid var(--border); background: var(--surface); z-index: 4; }
   .gantt-month { text-align: center; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 0; border-right: 1px solid var(--border); }
   .gantt-month:last-child { border-right: none; }
   .gantt-body { position: relative; }
@@ -1351,10 +1351,29 @@ export default function App() {
         </div>
 
         {selectedProject && (
-          <div className="status-bar" style={{marginBottom:8}}>
+          <div className="status-bar" style={{marginBottom:0}}>
             <span style={{fontWeight:600,color:'var(--text)'}}>{selectedProjectData?.project_name}</span>
             <span>|</span><span>PM: {selectedProjectData?.pm||'—'}</span><span>DM: {selectedProjectData?.dm||'—'}</span><span>Principal: {selectedProjectData?.principal||'—'}</span>
             {currentPhase && <><span>|</span><span className="status-dot" style={{background:currentPhase.color}} /><span style={{color:currentPhase.color,fontWeight:500}}>Currently in {currentPhase.name}</span></>}
+          </div>
+        )}
+
+        {selectedProject && (
+          <div className="gantt-toolbar">
+            <div className="gantt-toolbar-left">
+              {canEdit && <>
+                <button className="btn btn-ghost btn-sm" onClick={()=>handleAddTask(true)}>+ Task</button>
+                <button className="btn btn-ghost btn-sm" onClick={()=>handleAddTask(false)}>+ Milestone</button>
+              </>}
+            </div>
+            <div className="gantt-toolbar-right">
+              <label className="gantt-toggle">
+                <input type="checkbox" checked={showCritical} onChange={e=>setShowCritical(e.target.checked)} style={{accentColor:'var(--accent)', width:14, height:14}} />
+                <span>Critical Path</span>
+              </label>
+              <button className="btn btn-ghost btn-sm" onClick={handleUndo} disabled={!undoStack.current.length} title="Undo (Ctrl+Z)">↩ Undo</button>
+              <button className="btn btn-ghost btn-sm" onClick={()=>setShowExport(true)}>↓ Export PDF</button>
+            </div>
           </div>
         )}
       </div>
@@ -1363,24 +1382,8 @@ export default function App() {
         <div className="empty-state"><p>Select a project to view or edit its schedule</p></div>
       ) : (
         <>
-          {/* Gantt Chart with sticky toolbar */}
+          {/* Gantt Chart */}
           <div className="gantt-wrap" ref={ganttWrapRef}>
-            <div className="gantt-toolbar">
-              <div className="gantt-toolbar-left">
-                {canEdit && <>
-                  <button className="btn btn-ghost btn-sm" onClick={()=>handleAddTask(true)}>+ Task</button>
-                  <button className="btn btn-ghost btn-sm" onClick={()=>handleAddTask(false)}>+ Milestone</button>
-                </>}
-              </div>
-              <div className="gantt-toolbar-right">
-                <label className="gantt-toggle">
-                  <input type="checkbox" checked={showCritical} onChange={e=>setShowCritical(e.target.checked)} style={{accentColor:'var(--accent)', width:14, height:14}} />
-                  <span>Critical Path</span>
-                </label>
-                <button className="btn btn-ghost btn-sm" onClick={handleUndo} disabled={!undoStack.current.length} title="Undo (Ctrl+Z)">↩ Undo</button>
-                <button className="btn btn-ghost btn-sm" onClick={()=>setShowExport(true)}>↓ Export PDF</button>
-              </div>
-            </div>
             <GanttChart
               allPhases={allPhases} phaseMap={phaseMap} schedulePhases={schedulePhases} tasks={sortedTasks}
               selectedTaskId={selectedTaskId} onSelectTask={id=>setSelectedTaskId(id)}
