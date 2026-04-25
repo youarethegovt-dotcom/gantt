@@ -61,12 +61,12 @@ export function AuthWrapper() {
    ═══════════════════════════════════════════════════════════ */
 
 const BUILTIN_PHASES = [
-  { code: 'PRE', name: 'Pre-Design', sort: 1, color: '#6366f1', builtin: true },
-  { code: 'SD',  name: 'Schematic Design', sort: 2, color: '#8b5cf6', builtin: true },
-  { code: 'DD',  name: 'Design Development', sort: 3, color: '#a855f7', builtin: true },
-  { code: 'CD',  name: 'Construction Documents', sort: 4, color: '#d946ef', builtin: true },
-  { code: 'BID', name: 'Bidding', sort: 5, color: '#ec4899', builtin: true },
-  { code: 'CA',  name: 'Construction Administration', sort: 6, color: '#f43f5e', builtin: true },
+  { code: 'PRE', name: 'Pre-Design', sort: 1, color: '#9ca3af', builtin: true },
+  { code: 'SD',  name: 'Schematic Design', sort: 2, color: '#3b82f6', builtin: true },
+  { code: 'DD',  name: 'Design Development', sort: 3, color: '#22c55e', builtin: true },
+  { code: 'CD',  name: 'Construction Documents', sort: 4, color: '#f97316', builtin: true },
+  { code: 'BID', name: 'Bidding', sort: 5, color: '#d97706', builtin: true },
+  { code: 'CA',  name: 'Construction Administration', sort: 6, color: '#8b5cf6', builtin: true },
 ];
 
 const BUILTIN_PREFIX = { PRE: 'PD', SD: 'SD', DD: 'DD', CD: 'CD', BID: 'BD', CA: 'CA' };
