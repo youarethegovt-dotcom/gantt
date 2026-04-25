@@ -558,7 +558,7 @@ function computeCriticalPath(tasks) {
    ═══════════════════════════════════════════════════════════ */
 
 function GanttChart({ allPhases, phaseMap, schedulePhases, tasks, selectedTaskId, onSelectTask,
-  criticalSet, showCritical, canEdit, onResizeEnd, onReorder, wrapRef, containerWidth }) {
+  criticalSet, showCritical, canEdit, onResizeEnd, onReorder, wrapRef, containerWidth, stickyHeight }) {
 
   const phasesWithDates = schedulePhases.filter(p => p.phase_start && p.phase_end);
   const tasksWithDates = tasks.filter(t => t.start_date);
@@ -667,7 +667,7 @@ function GanttChart({ allPhases, phaseMap, schedulePhases, tasks, selectedTaskId
   return (
     <div className="gantt-container">
       <div className="gantt" style={{ width: totalWidth + labelWidth }}>
-        <div className="gantt-header">
+        <div className="gantt-header" style={{ position: 'sticky', top: stickyHeight || 0, zIndex: 21, background: 'var(--surface)' }}>
           <div style={{ width: labelWidth, minWidth: labelWidth, padding: '6px 12px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', borderRight: '1px solid var(--border)', position: 'relative', flexShrink: 0 }}>
             Task / Phase
             <div className="label-resize-handle" onMouseDown={handleLabelResize} />
@@ -1105,17 +1105,22 @@ export default function App() {
   const undoStack = useRef([]);
   const saveTimeout = useRef({});
   const ganttWrapRef = useRef(null);
+  const stickyTopRef = useRef(null);
   const [ganttWidth, setGanttWidth] = useState(1200);
+  const [stickyHeight, setStickyHeight] = useState(0);
 
-  // Measure gantt wrapper width
+  // Measure gantt wrapper width and sticky-top height
   useEffect(() => {
     const measure = () => {
       if (ganttWrapRef.current) setGanttWidth(ganttWrapRef.current.clientWidth);
+      if (stickyTopRef.current) setStickyHeight(stickyTopRef.current.offsetHeight);
     };
     measure();
     window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
-  }, [selectedProject]);
+    // Re-measure after a short delay for layout settling
+    const t = setTimeout(measure, 100);
+    return () => { window.removeEventListener('resize', measure); clearTimeout(t); };
+  }, [selectedProject, currentUser]);
 
   // Derived: merged phase list
   const allPhases = useMemo(() => mergePhases(customPhases), [customPhases]);
@@ -1330,7 +1335,7 @@ export default function App() {
       <style>{CSS}</style>
 
       {/* Sticky top section */}
-      <div className="sticky-top">
+      <div className="sticky-top" ref={stickyTopRef}>
         {/* Header */}
         <div className="header">
           <h1><span className="logo">ESa</span> Schedule</h1>
@@ -1389,7 +1394,7 @@ export default function App() {
               selectedTaskId={selectedTaskId} onSelectTask={id=>setSelectedTaskId(id)}
               criticalSet={criticalSet} showCritical={showCritical} canEdit={canEdit}
               onResizeEnd={(id,f,v)=>handleTaskDateChange(id,f,v)} onReorder={handleReorder}
-              containerWidth={ganttWidth}
+              containerWidth={ganttWidth} stickyHeight={stickyHeight}
             />
           </div>
 
