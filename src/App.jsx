@@ -553,6 +553,22 @@ function computeCriticalPath(tasks) {
 }
 
 
+/* Check if setting taskId to depend on depId would create a cycle */
+function wouldCreateCycle(tasks, taskId, depId) {
+  if (!depId || taskId === depId) return true;
+  const visited = new Set();
+  let current = depId;
+  while (current) {
+    if (current === taskId) return true;
+    if (visited.has(current)) return false; // already checked
+    visited.add(current);
+    const t = tasks.find(x => x.id === current);
+    current = t?.depends_on || null;
+  }
+  return false;
+}
+
+
 /* ═══════════════════════════════════════════════════════════
    GANTT CHART COMPONENT
    ═══════════════════════════════════════════════════════════ */
@@ -799,7 +815,7 @@ function TaskDrawer({ task, tasks, allPhases, phaseMap, canEdit, onUpdate, onDat
           <div className="drawer-field"><label>Depends On</label>
             <select value={task.depends_on||''} disabled={!canEdit} onChange={e=>onUpdate(task.id,'depends_on',e.target.value||null)}>
               <option value="">None</option>
-              {tasks.filter(t=>t.id!==task.id).map(t => <option key={t.id} value={t.id}>{t._displayId||''} {t.milestone_name||'(unnamed)'}</option>)}
+              {tasks.filter(t=>t.id!==task.id && !wouldCreateCycle(tasks, task.id, t.id)).map(t => <option key={t.id} value={t.id}>{t._displayId||''} {t.milestone_name||'(unnamed)'}</option>)}
             </select>
             {task.depends_on && <div className="dep-type-row">{DEP_TYPES.map(dt => <button key={dt} className={`dep-type-btn ${(task.dependency_type||'FS')===dt?'active':''}`} onClick={()=>canEdit&&onUpdate(task.id,'dependency_type',dt)}>{dt}</button>)}</div>}
           </div>
@@ -1234,9 +1250,17 @@ export default function App() {
 
       // If a dependency field changed, recalculate dates through the chain
       if (depFields.includes(field)) {
+        // Check for circular dependency when setting depends_on
+        if (field === 'depends_on' && value && wouldCreateCycle(up, id, value)) {
+          // Revert — don't set the circular dep
+          return prev;
+        }
+
         let changed = true;
-        while (changed) {
+        let iterations = 0;
+        while (changed && iterations < 100) {
           changed = false;
+          iterations++;
           up = up.map(t => {
             if (!t.depends_on) return t;
             const dep = up.find(x => x.id === t.depends_on);
@@ -1293,8 +1317,10 @@ export default function App() {
     setTasks(prev => {
       let up = prev.map(t => { if(t.id!==id) return t; const n={...t,[field]:value}; if(field==='start_date'&&n.duration_business_days) n.end_date=addBusinessDays(value,n.duration_business_days); return n; });
       let changed=true;
-      while(changed){
+      let iterations=0;
+      while(changed&&iterations<100){
         changed=false;
+        iterations++;
         up=up.map(t=>{
           if(!t.depends_on)return t;
           const dep=up.find(x=>x.id===t.depends_on);
