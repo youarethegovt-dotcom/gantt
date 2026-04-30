@@ -790,7 +790,7 @@ function TaskDrawer({ task, tasks, allPhases, phaseMap, canEdit, onUpdate, onDat
             </select>
           </div>
           <div className="drawer-row">
-            <div className="drawer-field"><label>Start Date</label><input type="date" value={task.start_date||''} disabled={!canEdit||!!anchor} onChange={e=>onDateChange(task.id,'start_date',e.target.value)} /></div>
+            <div className="drawer-field"><label>Start Date{task.depends_on && (task.dependency_type||'FS')==='FS' ? <span style={{fontSize:10,color:'var(--accent)',marginLeft:6}}>(auto from dependency)</span>:''}</label><input type="date" value={task.start_date||''} disabled={!canEdit||!!anchor||!!(task.depends_on&&['FS','SS'].includes(task.dependency_type||'FS'))} onChange={e=>onDateChange(task.id,'start_date',e.target.value)} /></div>
             <div className="drawer-field"><label>End Date</label><input type="date" value={task.end_date||''} disabled={!canEdit||(task.duration_business_days&&task.start_date)||!!anchor} onChange={e=>onDateChange(task.id,'end_date',e.target.value)} /></div>
           </div>
           <div className="drawer-field"><label>Duration (business days)</label>
@@ -1227,7 +1227,64 @@ export default function App() {
   // Task update (non-date)
   const handleTaskUpdate = useCallback((id, field, value) => {
     pushUndo();
-    setTasks(prev => { const up = prev.map(t => t.id===id ? {...t,[field]:value} : t); debouncedSave('schedule_milestones', id, {[field]:value}); return up; });
+    const depFields = ['depends_on', 'dependency_type', 'gap_business_days'];
+    setTasks(prev => {
+      let up = prev.map(t => t.id===id ? {...t,[field]:value} : t);
+      debouncedSave('schedule_milestones', id, {[field]:value});
+
+      // If a dependency field changed, recalculate dates through the chain
+      if (depFields.includes(field)) {
+        let changed = true;
+        while (changed) {
+          changed = false;
+          up = up.map(t => {
+            if (!t.depends_on) return t;
+            const dep = up.find(x => x.id === t.depends_on);
+            if (!dep) return t;
+            const dt = t.dependency_type || 'FS';
+            const gap = t.gap_business_days || 0;
+            let newStart = t.start_date;
+
+            if (dt === 'FS' && dep.end_date) {
+              newStart = gap > 0 ? addBusinessDays(dep.end_date, gap) : addDays(dep.end_date, 1);
+            } else if (dt === 'SS' && dep.start_date) {
+              newStart = gap > 0 ? addBusinessDays(dep.start_date, gap) : dep.start_date;
+            } else if (dt === 'FF' && dep.end_date && t.duration_business_days) {
+              const endTarget = gap > 0 ? addBusinessDays(dep.end_date, gap) : dep.end_date;
+              // Work backward from end date
+              const d = new Date(endTarget + 'T00:00:00');
+              let bd = 0;
+              while (bd < t.duration_business_days) { d.setDate(d.getDate() - 1); if (d.getDay() !== 0 && d.getDay() !== 6) bd++; }
+              newStart = d.toISOString().split('T')[0];
+            } else if (dt === 'SF' && dep.start_date) {
+              if (t.duration_business_days) {
+                const endTarget = gap > 0 ? addBusinessDays(dep.start_date, gap) : dep.start_date;
+                const d = new Date(endTarget + 'T00:00:00');
+                let bd = 0;
+                while (bd < t.duration_business_days) { d.setDate(d.getDate() - 1); if (d.getDay() !== 0 && d.getDay() !== 6) bd++; }
+                newStart = d.toISOString().split('T')[0];
+              }
+            }
+
+            if (newStart !== t.start_date) {
+              changed = true;
+              const n = { ...t, start_date: newStart };
+              if (n.duration_business_days) n.end_date = addBusinessDays(newStart, n.duration_business_days);
+              return n;
+            }
+            return t;
+          });
+        }
+        // Save any tasks whose dates changed
+        up.forEach(t => {
+          const orig = prev.find(x => x.id === t.id);
+          if (orig && (orig.start_date !== t.start_date || orig.end_date !== t.end_date)) {
+            debouncedSave('schedule_milestones', t.id, { start_date: t.start_date, end_date: t.end_date || null });
+          }
+        });
+      }
+      return up;
+    });
   }, [debouncedSave, pushUndo]);
 
   // Task date change with propagation
@@ -1236,7 +1293,41 @@ export default function App() {
     setTasks(prev => {
       let up = prev.map(t => { if(t.id!==id) return t; const n={...t,[field]:value}; if(field==='start_date'&&n.duration_business_days) n.end_date=addBusinessDays(value,n.duration_business_days); return n; });
       let changed=true;
-      while(changed){changed=false;up=up.map(t=>{if(!t.depends_on)return t;const d=up.find(x=>x.id===t.depends_on);if(!d?.end_date)return t;const gap=t.gap_business_days||0;const ns=gap>0?addBusinessDays(d.end_date,gap):addDays(d.end_date,1);if(ns!==t.start_date){changed=true;const n={...t,start_date:ns};if(n.duration_business_days)n.end_date=addBusinessDays(ns,n.duration_business_days);return n;}return t;});}
+      while(changed){
+        changed=false;
+        up=up.map(t=>{
+          if(!t.depends_on)return t;
+          const dep=up.find(x=>x.id===t.depends_on);
+          if(!dep)return t;
+          const dt=t.dependency_type||'FS';
+          const gap=t.gap_business_days||0;
+          let newStart=t.start_date;
+
+          if(dt==='FS'&&dep.end_date){
+            newStart=gap>0?addBusinessDays(dep.end_date,gap):addDays(dep.end_date,1);
+          }else if(dt==='SS'&&dep.start_date){
+            newStart=gap>0?addBusinessDays(dep.start_date,gap):dep.start_date;
+          }else if(dt==='FF'&&dep.end_date&&t.duration_business_days){
+            const endTarget=gap>0?addBusinessDays(dep.end_date,gap):dep.end_date;
+            const d=new Date(endTarget+'T00:00:00');let bd=0;
+            while(bd<t.duration_business_days){d.setDate(d.getDate()-1);if(d.getDay()!==0&&d.getDay()!==6)bd++;}
+            newStart=d.toISOString().split('T')[0];
+          }else if(dt==='SF'&&dep.start_date&&t.duration_business_days){
+            const endTarget=gap>0?addBusinessDays(dep.start_date,gap):dep.start_date;
+            const d=new Date(endTarget+'T00:00:00');let bd=0;
+            while(bd<t.duration_business_days){d.setDate(d.getDate()-1);if(d.getDay()!==0&&d.getDay()!==6)bd++;}
+            newStart=d.toISOString().split('T')[0];
+          }else{return t;}
+
+          if(newStart!==t.start_date){
+            changed=true;
+            const n={...t,start_date:newStart};
+            if(n.duration_business_days)n.end_date=addBusinessDays(newStart,n.duration_business_days);
+            return n;
+          }
+          return t;
+        });
+      }
       up.forEach(t=>{const o=prev.find(x=>x.id===t.id);if(o&&(o.start_date!==t.start_date||o.end_date!==t.end_date))debouncedSave('schedule_milestones',t.id,{start_date:t.start_date,end_date:t.end_date||null});});
       return up;
     });
