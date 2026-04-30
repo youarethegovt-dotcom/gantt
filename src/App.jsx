@@ -791,7 +791,7 @@ function TaskDrawer({ task, tasks, allPhases, phaseMap, canEdit, onUpdate, onDat
           </div>
           <div className="drawer-row">
             <div className="drawer-field"><label>Start Date{task.depends_on && (task.dependency_type||'FS')==='FS' ? <span style={{fontSize:10,color:'var(--accent)',marginLeft:6}}>(auto from dependency)</span>:''}</label><input type="date" value={task.start_date||''} disabled={!canEdit||!!anchor||!!(task.depends_on&&['FS','SS'].includes(task.dependency_type||'FS'))} onChange={e=>onDateChange(task.id,'start_date',e.target.value)} /></div>
-            <div className="drawer-field"><label>End Date</label><input type="date" value={task.end_date||''} disabled={!canEdit||(task.duration_business_days&&task.start_date)||!!anchor} onChange={e=>onDateChange(task.id,'end_date',e.target.value)} /></div>
+            <div className="drawer-field"><label>End Date{task.duration_business_days && task.start_date ? <span style={{fontSize:10,color:'var(--accent)',marginLeft:6}}>(auto from duration)</span>:''}</label><input type="date" value={task.end_date||''} min={task.start_date||''} disabled={!canEdit||!!(task.duration_business_days&&task.start_date)||!!anchor} onChange={e=>{const v=e.target.value;if(v&&task.start_date&&v<task.start_date)return;onDateChange(task.id,'end_date',v);}} /></div>
           </div>
           <div className="drawer-field"><label>Duration (business days)</label>
             <input type="number" min="0" value={task.duration_business_days??''} disabled={!canEdit} onChange={e=>{const v=parseInt(e.target.value)||0; onUpdate(task.id,'duration_business_days',v||null); if(v&&task.start_date) onDateChange(task.id,'end_date',addBusinessDays(task.start_date,v));}} />
